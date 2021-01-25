@@ -3,11 +3,13 @@ package gitconfig
 import (
 	"fmt"
 	"gopkg.in/ini.v1"
+	"strings"
 )
 
 type forgeconfig interface {
 	AddForge(name string, forgetype string, cloneUrl string, apiUrl string, user string, pass string) error
 	DelForge(name string) error
+	LookupForge(url string) (string, error)
 	CommitConfig() error
 }
 
@@ -50,6 +52,22 @@ func (f *ForgeConfig) AddForge(name string, forgetype string, cloneUrl string, a
 	sec.NewKey("pass", pass)
 
 	return nil
+}
+
+func (f *ForgeConfig) LookupForge(url string) (string, error) {
+	secs := f.cfg.Sections()
+
+	for _, sec := range secs {
+		if sec.HasKey("forgetype") == false {
+			continue
+		}
+		cloneurl := sec.Key("cloneurl").String()
+		if strings.HasPrefix(url, cloneurl) == true {
+			return sec.Key("forgetype").String(), nil
+		}
+	}
+
+	return "", fmt.Errorf("Unable to locate forge for url %s\n", url)
 }
 
 func (f *ForgeConfig) DelForge(name string) error {
