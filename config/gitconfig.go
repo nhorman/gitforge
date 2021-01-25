@@ -71,6 +71,7 @@ func (f *ForgeConfig) LookupForge(url string) (string, error) {
 }
 
 func (f *ForgeConfig) DelForge(name string) error {
+	f.cfg.DeleteSection("forge \"" + name + "\"")
 	return nil
 }
 

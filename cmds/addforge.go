@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func usage() {
+func Addusage() {
 	fmt.Printf("Usage: git forge addforge [options]\n")
 	fmt.Printf("Description: Add a forge type to the global gitconfig\n")
 	fmt.Printf("Options:\n")
@@ -28,7 +28,7 @@ func AddForgeCmd() error {
 
 	gitconfigpath := os.Getenv("HOME") + "/.gitconfig"
 	if *helpopt == true {
-		usage()
+		Addusage()
 		return nil
 	}
 

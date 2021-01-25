@@ -8,6 +8,7 @@ import (
 
 var subcmds = map[string]func() error{
 	"addforge": cmds.AddForgeCmd,
+	"delforge": cmds.DelForgeCmd,
 }
 
 func usage() error {
