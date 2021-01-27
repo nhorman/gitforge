@@ -13,7 +13,7 @@ func NewBitBucketForge() *BitBucketForge {
 }
 
 func (f *BitBucketForge) Clone(parentFork bool, url string) error {
-	logging.Forgelog.Printf("This appears to be a bitbucket forge\n")
+	logging.Forgelog.Printf("%s appears to be a bitbucket forge\n", url)
 
 	return nil
 }
