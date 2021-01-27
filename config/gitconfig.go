@@ -10,6 +10,7 @@ type forgeconfig interface {
 	AddForge(name string, forgetype string, cloneUrl string, apiUrl string, user string, pass string) error
 	DelForge(name string) error
 	LookupForge(url string) (string, error)
+	GetCreds() (string, string, error)
 	CommitConfig() error
 }
 
@@ -57,6 +58,18 @@ func GetForgeConfig(path string, name string) (*ForgeConfig, error) {
 
 }
 
+func GetForgeConfigFromUrl(path string, url string) (*ForgeConfig, error) {
+	forge, err := NewForgeConfig(path)
+	if err != nil {
+		return nil, err
+	}
+	fname, err2 := forge.LookupForge(url)
+	if err2 != nil {
+		return nil, err2
+	}
+	return GetForgeConfig(path, fname)
+}
+
 func (f *ForgeConfig) AddForge(name string, forgetype string, cloneUrl string, apiUrl string, user string, pass string) error {
 	var err error
 	var sec *ini.Section
@@ -102,6 +115,13 @@ func (f *ForgeConfig) DelForge() error {
 	name := f.sec.Key("name").String()
 	f.cfg.DeleteSection("forge \"" + name + "\"")
 	return nil
+}
+
+func (f *ForgeConfig) GetCreds() (string, string, error) {
+	if f.sec == nil {
+		return "", "", fmt.Errorf("No section specified for this config\n")
+	}
+	return f.sec.Key("user").String(), f.sec.Key("pass").String(), nil
 }
 
 func (f *ForgeConfig) CommitConfig() error {

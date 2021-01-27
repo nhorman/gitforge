@@ -3,19 +3,19 @@ package forge
 import ()
 
 type CommonOpts struct {
-	user string
-	pass string
+	User string
+	Pass string
 }
 
 type CloneOpts struct {
-	CommonOpts
+	Common     CommonOpts
 	Parentfork bool
 	Url        string
 }
 
 type ForkOpts struct {
-	CommonOpts
-	Url string
+	Common CommonOpts
+	Url    string
 }
 
 type Forge interface {
