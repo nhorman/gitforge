@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"flag"
+	"git-forge/forge"
 	"git-forge/log"
 	"os"
 )
@@ -26,12 +27,17 @@ func CloneForgeCmd() error {
 	// last argument must be the url
 	url := os.Args[len(os.Args)-1]
 
+	cloneopts := forge.CloneOpts{
+		Parentfork: *parentopt,
+		Url:        url,
+	}
+
 	forge, err := AllocateForgeFromUrl(url)
 	if err != nil {
 		return err
 	}
 
-	clonerr := forge.Clone(*parentopt, url)
+	clonerr := forge.Clone(cloneopts)
 
 	return clonerr
 }
