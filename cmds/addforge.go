@@ -4,13 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"git-forge/config"
+	"git-forge/log"
 	"os"
 )
 
 func Addusage() {
-	fmt.Printf("Usage: git forge addforge [options]\n")
-	fmt.Printf("Description: Add a forge type to the global gitconfig\n")
-	fmt.Printf("Options:\n")
+	logging.Forgelog.Printf("Usage: git forge addforge [options]\n")
+	logging.Forgelog.Printf("Description: Add a forge type to the global gitconfig\n")
+	logging.Forgelog.Printf("Options:\n")
 	flag.PrintDefaults()
 }
 

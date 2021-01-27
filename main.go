@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"git-forge/cmds"
+	"git-forge/log"
 	"os"
 )
 
@@ -13,11 +13,11 @@ var subcmds = map[string]func() error{
 }
 
 func usage() error {
-	fmt.Printf("%s <cmd> [options]\n", os.Args[0])
-	fmt.Printf("cmds:\n")
-	fmt.Printf("\thelp\n")
+	logging.Forgelog.Printf("%s <cmd> [options]\n", os.Args[0])
+	logging.Forgelog.Printf("cmds:\n")
+	logging.Forgelog.Printf("\thelp\n")
 	for key, _ := range subcmds {
-		fmt.Printf("\t%s\n", key)
+		logging.Forgelog.Printf("\t%s\n", key)
 	}
 	return nil
 }
@@ -46,7 +46,7 @@ func main() {
 	os.Args = os.Args[1:]
 	err := cmd()
 	if err != nil {
-		fmt.Printf("%s failed: %s\n", cmdname, err)
+		logging.Forgelog.Printf("%s failed: %s\n", cmdname, err)
 		os.Exit(1)
 	}
 	os.Exit(0)

@@ -4,13 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"git-forge/config"
+	"git-forge/log"
 	"os"
 )
 
 func Delusage() {
-	fmt.Printf("Usage: git forge delforge [options]\n")
-	fmt.Printf("Description: Remove a forge type to the global gitconfig\n")
-	fmt.Printf("Options:\n")
+	logging.Forgelog.Printf("Usage: git forge delforge [options]\n")
+	logging.Forgelog.Printf("Description: Remove a forge type to the global gitconfig\n")
+	logging.Forgelog.Printf("Options:\n")
 	flag.PrintDefaults()
 }
 
