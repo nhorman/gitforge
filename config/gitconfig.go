@@ -16,6 +16,7 @@ type forgeconfig interface {
 type ForgeConfig struct {
 	path string
 	cfg  *ini.File
+	sec  *ini.Section
 }
 
 func NewForgeConfig(path string) (*ForgeConfig, error) {
@@ -26,7 +27,34 @@ func NewForgeConfig(path string) (*ForgeConfig, error) {
 	return &ForgeConfig{
 		path: path,
 		cfg:  cfg,
+		sec:  nil,
 	}, nil
+}
+
+func GetForgeConfig(path string, name string) (*ForgeConfig, error) {
+	cfg, err := ini.Load(path)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to open ~/.gitconfig: %s\n", err)
+	}
+
+	secs := cfg.Sections()
+
+	for _, sec := range secs {
+		if sec.HasKey("forgetype") == false {
+			continue
+		}
+		fname := sec.Key("name").String()
+		if name == fname {
+			return &ForgeConfig{
+				path: "~/.gitconfig",
+				cfg:  cfg,
+				sec:  sec,
+			}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Unable to find Forge named %s\n", name)
+
 }
 
 func (f *ForgeConfig) AddForge(name string, forgetype string, cloneUrl string, apiUrl string, user string, pass string) error {
@@ -50,7 +78,7 @@ func (f *ForgeConfig) AddForge(name string, forgetype string, cloneUrl string, a
 	sec.NewKey("apiurl", apiUrl)
 	sec.NewKey("user", user)
 	sec.NewKey("pass", pass)
-
+	f.sec = sec
 	return nil
 }
 
@@ -70,7 +98,8 @@ func (f *ForgeConfig) LookupForge(url string) (string, error) {
 	return "", fmt.Errorf("Unable to locate forge for url %s\n", url)
 }
 
-func (f *ForgeConfig) DelForge(name string) error {
+func (f *ForgeConfig) DelForge() error {
+	name := f.sec.Key("name").String()
 	f.cfg.DeleteSection("forge \"" + name + "\"")
 	return nil
 }

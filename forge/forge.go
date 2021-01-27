@@ -2,12 +2,19 @@ package forge
 
 import ()
 
+type CommonOpts struct {
+	user string
+	pass string
+}
+
 type CloneOpts struct {
+	CommonOpts
 	Parentfork bool
 	Url        string
 }
 
 type ForkOpts struct {
+	CommonOpts
 	Url string
 }
 

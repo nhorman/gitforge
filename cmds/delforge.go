@@ -27,13 +27,13 @@ func DelForgeCmd() error {
 		return nil
 	}
 
-	forgeconfig, err := gitconfig.NewForgeConfig(gitconfigpath)
+	forgeconfig, err := gitconfig.GetForgeConfig(gitconfigpath, *nameopt)
 	if err != nil {
 		return fmt.Errorf("Create forge config failed: %s\n", err)
 	}
 	defer forgeconfig.CommitConfig()
 
-	ferr := forgeconfig.DelForge(*nameopt)
+	ferr := forgeconfig.DelForge()
 	if ferr != nil {
 		return fmt.Errorf("Failed to add forge: %s\n", ferr)
 	}
