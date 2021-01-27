@@ -3,13 +3,15 @@ package gitconfig
 import (
 	"fmt"
 	"gopkg.in/ini.v1"
+	"os"
 	"strings"
 )
 
 type forgeconfig interface {
 	AddForge(name string, forgetype string, cloneUrl string, apiUrl string, user string, pass string) error
 	DelForge(name string) error
-	LookupForge(url string) (string, error)
+	LookupForgeType(url string) (string, error)
+	LookupForgeName(url string) (string, error)
 	GetCreds() (string, string, error)
 	CommitConfig() error
 }
@@ -18,6 +20,30 @@ type ForgeConfig struct {
 	path string
 	cfg  *ini.File
 	sec  *ini.Section
+}
+
+func LookupForgeType(url string) (string, error) {
+
+	gitconfigpath := os.Getenv("HOME") + "/.gitconfig"
+
+	forgeconfig, err := NewForgeConfig(gitconfigpath)
+	if err != nil {
+		return "", fmt.Errorf("Lookup forge config failed: %s\n", err)
+	}
+
+	return forgeconfig.LookupForgeType(url)
+}
+
+func LookupForgeName(url string) (string, error) {
+
+	gitconfigpath := os.Getenv("HOME") + "/.gitconfig"
+
+	forgeconfig, err := NewForgeConfig(gitconfigpath)
+	if err != nil {
+		return "", fmt.Errorf("Lookup forge config failed: %s\n", err)
+	}
+
+	return forgeconfig.LookupForgeName(url)
 }
 
 func NewForgeConfig(path string) (*ForgeConfig, error) {
@@ -63,7 +89,7 @@ func GetForgeConfigFromUrl(path string, url string) (*ForgeConfig, error) {
 	if err != nil {
 		return nil, err
 	}
-	fname, err2 := forge.LookupForge(url)
+	fname, err2 := forge.LookupForgeName(url)
 	if err2 != nil {
 		return nil, err2
 	}
@@ -95,7 +121,7 @@ func (f *ForgeConfig) AddForge(name string, forgetype string, cloneUrl string, a
 	return nil
 }
 
-func (f *ForgeConfig) LookupForge(url string) (string, error) {
+func (f *ForgeConfig) LookupForgeType(url string) (string, error) {
 	secs := f.cfg.Sections()
 
 	for _, sec := range secs {
@@ -105,6 +131,22 @@ func (f *ForgeConfig) LookupForge(url string) (string, error) {
 		cloneurl := sec.Key("cloneurl").String()
 		if strings.HasPrefix(url, cloneurl) == true {
 			return sec.Key("forgetype").String(), nil
+		}
+	}
+
+	return "", fmt.Errorf("Unable to locate forge for url %s\n", url)
+}
+
+func (f *ForgeConfig) LookupForgeName(url string) (string, error) {
+	secs := f.cfg.Sections()
+
+	for _, sec := range secs {
+		if sec.HasKey("forgetype") == false {
+			continue
+		}
+		cloneurl := sec.Key("cloneurl").String()
+		if strings.HasPrefix(url, cloneurl) == true {
+			return sec.Key("name").String(), nil
 		}
 	}
 
