@@ -24,7 +24,7 @@ func CloneForgeCmd() error {
 		return nil
 	}
 	// last argument must be the url
-	url := os.Args[len(os.Args)]
+	url := os.Args[len(os.Args)-1]
 
 	forge, err := AllocateForgeFromUrl(url)
 	if err != nil {
