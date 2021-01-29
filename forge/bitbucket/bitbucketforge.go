@@ -19,13 +19,25 @@ func NewBitBucketForge() *BitBucketForge {
 
 }
 
-func getRepoSlugAndOwner(url string) (string, string, error) {
+func getRepoSlugAndOwner(url string) (string, string, string, error) {
+	var owner string
 	base := path.Base(url)
 	slug := strings.TrimSuffix(base, filepath.Ext(base))
 	noslugurl := strings.TrimSuffix(url, base)
-	owner := path.Base(noslugurl)
+	owner = path.Base(noslugurl)
+
 	// Need to see if we need to trim any git@ crap from the owner string
-	return slug, owner, nil
+	if strings.HasPrefix(owner, "git@") == true {
+		// we have to chop off everthing up to the ':'
+		idx := strings.Index(owner, ":")
+		owner = owner[idx+1:]
+	}
+	finalbaseurl := strings.TrimSuffix(noslugurl, owner)
+	return finalbaseurl, slug, owner, nil
+}
+
+func (f *BitBucketForge) cleanup(dirname string) error {
+	return os.RemoveAll(dirname)
 }
 
 func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
@@ -44,18 +56,26 @@ func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
 		return clonerr
 	}
 
-	// now get us our auth token for the bitbucket api
-	c := bitbucket.NewBasicAuth(opts.Common.User, opts.Common.Pass)
-	// Indicate what repo we want
-	slug, owner, _ := getRepoSlugAndOwner(opts.Url)
-	bopts := &bitbucket.RepositoryOptions{
-		RepoSlug: slug,
-		Owner:    owner,
-	}
+	if opts.Parentfork == true {
+		// now get us our auth token for the bitbucket api
+		c := bitbucket.NewBasicAuth(opts.Common.User, opts.Common.Pass)
+		// Indicate what repo we want
+		_, slug, owner, _ := getRepoSlugAndOwner(opts.Url)
+		bopts := &bitbucket.RepositoryOptions{
+			RepoSlug: slug,
+			Owner:    owner,
+		}
 
-	_, rerr := c.Repositories.Repository.Get(bopts)
-	if rerr != nil {
-		return rerr
+		repo, rerr := c.Repositories.Repository.Get(bopts)
+		if rerr != nil {
+			f.cleanup(dirname)
+			return rerr
+		}
+
+		parentFullName := repo.Parent.Full_name
+		parentSlug := path.Base(parentFullName)
+		parentOwner := strings.TrimSuffix(parentFullName, "/"+parentSlug)
+		logging.Forgelog.Printf("%s %s\n", parentSlug, parentOwner)
 	}
 	return nil
 }
