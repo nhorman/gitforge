@@ -13,6 +13,7 @@ func Addusage() {
 	logging.Forgelog.Printf("Description: Add a forge type to the global gitconfig\n")
 	logging.Forgelog.Printf("Options:\n")
 	flag.PrintDefaults()
+	PrintForgeTypes()
 }
 
 func AddForgeCmd() error {

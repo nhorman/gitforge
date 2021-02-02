@@ -1,6 +1,7 @@
 package bitbucketforge
 
 import (
+	"git-forge/cmds"
 	"git-forge/forge"
 	"git-forge/log"
 	"github.com/ktrysmt/go-bitbucket"
@@ -12,10 +13,17 @@ import (
 	"strings"
 )
 
+func init() {
+	err := cmds.RegisterForgeType("bitbucket", NewBitBucketForge)
+	if err != nil {
+		logging.Forgelog.Printf("Unable to register: %s\n", err)
+	}
+}
+
 type BitBucketForge struct {
 }
 
-func NewBitBucketForge() *BitBucketForge {
+func NewBitBucketForge() forge.Forge {
 	return &BitBucketForge{}
 
 }

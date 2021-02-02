@@ -4,6 +4,9 @@ import (
 	"git-forge/cmds"
 	"git-forge/log"
 	"os"
+
+	// imports for forge registrations
+	_ "git-forge/forge/bitbucket"
 )
 
 var subcmds = map[string]func() error{

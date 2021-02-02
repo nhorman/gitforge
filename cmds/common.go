@@ -4,8 +4,25 @@ import (
 	"fmt"
 	"git-forge/config"
 	"git-forge/forge"
-	"git-forge/forge/bitbucket"
+	"git-forge/log"
 )
+
+var forgetypes map[string]func() forge.Forge = make(map[string]func() forge.Forge, 0)
+
+func RegisterForgeType(name string, ifunc func() forge.Forge) error {
+	if _, ok := forgetypes[name]; ok {
+		return fmt.Errorf("%s is already registered as a forge type\n", name)
+	}
+	forgetypes[name] = ifunc
+	return nil
+}
+
+func PrintForgeTypes() {
+	logging.Forgelog.Printf("Available Forge Types:\n")
+	for key, _ := range forgetypes {
+		logging.Forgelog.Printf("%s\n", key)
+	}
+}
 
 func AllocateForgeFromUrl(url string) (forge.Forge, error) {
 
@@ -17,13 +34,11 @@ func AllocateForgeFromUrl(url string) (forge.Forge, error) {
 		return nil, err
 	}
 
-	switch ftype {
-	case "bitbucket":
-		// Allocate a bitbucket Forge
-		forge = bitbucketforge.NewBitBucketForge()
-	default:
-		return nil, fmt.Errorf("This build does not support forge type %s\n", ftype)
+	ifunc, ok := forgetypes[ftype]
+	if ok == true {
+		forge = ifunc()
+	} else {
+		return nil, fmt.Errorf("No such forge type: %s\n", ftype)
 	}
-
 	return forge, nil
 }
