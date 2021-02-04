@@ -101,7 +101,7 @@ func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
 			f.cleanup(dirname)
 			return ferr
 		}
-		cerr := cfg.AddForgeRemoteSection("bitbucket", "origin", "origin-parent")
+		cerr := cfg.AddForgeRemoteSection(opts.ForgeName, "origin", "origin-parent")
 		if cerr != nil {
 			f.cleanup(dirname)
 			return cerr

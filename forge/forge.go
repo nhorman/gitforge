@@ -11,6 +11,7 @@ type CloneOpts struct {
 	Common     CommonOpts
 	Parentfork bool
 	Url        string
+	ForgeName  string
 }
 
 type ForkOpts struct {

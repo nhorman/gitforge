@@ -42,6 +42,10 @@ func CloneForgeCmd() error {
 		return cerr
 	}
 
+	fname, ferr := gitconfig.LookupForgeName(url)
+	if ferr != nil {
+		return ferr
+	}
 	cloneopts := forge.CloneOpts{
 		Common: forge.CommonOpts{
 			User: user,
@@ -49,6 +53,7 @@ func CloneForgeCmd() error {
 		},
 		Parentfork: *parentopt,
 		Url:        url,
+		ForgeName:  fname,
 	}
 
 	forge, err2 := AllocateForgeFromUrl(url)

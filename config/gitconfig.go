@@ -71,7 +71,7 @@ func GetForgeConfig(path string, name string) (*ForgeConfig, error) {
 		if sec.HasKey("forgetype") == false {
 			continue
 		}
-		fname := sec.Key("name").String()
+		fname := strings.Trim(strings.SplitAfter(sec.Name(), " ")[1], "\"")
 		if name == fname {
 			return &ForgeConfig{
 				path: "~/.gitconfig",
@@ -90,6 +90,8 @@ func GetForgeConfigFromUrl(path string, url string) (*ForgeConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer forge.CommitConfig()
+
 	fname, err2 := forge.LookupForgeName(url)
 	if err2 != nil {
 		return nil, err2
@@ -147,7 +149,9 @@ func (f *ForgeConfig) LookupForgeName(url string) (string, error) {
 		}
 		cloneurl := sec.Key("cloneurl").String()
 		if strings.HasPrefix(url, cloneurl) == true {
-			return sec.Key("name").String(), nil
+			secname := sec.Name()
+			secnameparts := strings.SplitAfter(secname, " ")
+			return strings.Trim(secnameparts[1], "\""), nil
 		}
 	}
 
@@ -155,7 +159,7 @@ func (f *ForgeConfig) LookupForgeName(url string) (string, error) {
 }
 
 func (f *ForgeConfig) DelForge() error {
-	name := f.sec.Key("name").String()
+	name := f.sec.Name()
 	f.cfg.DeleteSection("forge \"" + name + "\"")
 	return nil
 }
