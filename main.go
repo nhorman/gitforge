@@ -9,17 +9,11 @@ import (
 	_ "git-forge/forge/bitbucket"
 )
 
-var subcmds = map[string]func() error{
-	"addforge": cmds.AddForgeCmd,
-	"delforge": cmds.DelForgeCmd,
-	"clone":    cmds.CloneForgeCmd,
-}
-
 func usage() error {
 	logging.Forgelog.Printf("%s <cmd> [options]\n", os.Args[0])
 	logging.Forgelog.Printf("cmds:\n")
 	logging.Forgelog.Printf("\thelp\n")
-	for key, _ := range subcmds {
+	for key, _ := range cmds.Subcmds {
 		logging.Forgelog.Printf("\t%s\n", key)
 	}
 	return nil
@@ -38,7 +32,7 @@ func main() {
 	}
 
 	cmdname := os.Args[1]
-	cmd, found := subcmds[cmdname]
+	cmd, found := cmds.Subcmds[cmdname]
 	if found != true {
 		usage()
 		os.Exit(1)

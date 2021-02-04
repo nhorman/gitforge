@@ -8,6 +8,10 @@ import (
 	"os"
 )
 
+func init() {
+	RegisterCmd("addforge", AddForgeCmd)
+}
+
 func Addusage() {
 	logging.Forgelog.Printf("Usage: git forge addforge [options]\n")
 	logging.Forgelog.Printf("Description: Add a forge type to the global gitconfig\n")

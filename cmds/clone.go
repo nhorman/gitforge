@@ -8,6 +8,10 @@ import (
 	"os"
 )
 
+func init() {
+	RegisterCmd("clone", CloneForgeCmd)
+}
+
 func Cloneusage() {
 	logging.Forgelog.Printf("Usage: git forge clone [options] <repo url>\n")
 	logging.Forgelog.Printf("Description: clone a git repo, opionally setting up remotes for forks\n")

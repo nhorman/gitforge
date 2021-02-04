@@ -8,6 +8,10 @@ import (
 	"os"
 )
 
+func init() {
+	RegisterCmd("delforge", DelForgeCmd)
+}
+
 func Delusage() {
 	logging.Forgelog.Printf("Usage: git forge delforge [options]\n")
 	logging.Forgelog.Printf("Description: Remove a forge type to the global gitconfig\n")
