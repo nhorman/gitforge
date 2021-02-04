@@ -139,6 +139,6 @@ func (f *BitBucketForge) Fork(opts forge.ForkOpts) error {
 	if ferr != nil {
 		return ferr
 	}
-	logging.Forgelog.Printf("Forked from repo %s to repo %s/%s\n", frepo.Parent.Links["html"].(map[string]interface{})["href"].(string), user, slug)
+	logging.Forgelog.Printf("Forked from repo %s to repo %s/%s\n", frepo.Parent.Links["html"].(map[string]interface{})["href"].(string), owner, slug)
 	return nil
 }
