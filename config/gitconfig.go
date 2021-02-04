@@ -13,6 +13,7 @@ type forgeconfig interface {
 	LookupForgeType(url string) (string, error)
 	LookupForgeName(url string) (string, error)
 	GetCreds() (string, string, error)
+	AddForgeRemoteSection(string, string, string) error
 	CommitConfig() error
 }
 
@@ -164,6 +165,25 @@ func (f *ForgeConfig) GetCreds() (string, string, error) {
 		return "", "", fmt.Errorf("No section specified for this config\n")
 	}
 	return f.sec.Key("user").String(), f.sec.Key("pass").String(), nil
+}
+
+func (f *ForgeConfig) AddForgeRemoteSection(forgetype string, child string, parent string) error {
+	var sec *ini.Section
+	var err error
+
+	sec, err = f.cfg.GetSection("forge")
+	if err != nil {
+		sec, err = f.cfg.NewSection("forge")
+		if err != nil {
+			return fmt.Errorf("Unable to create a forge section in git configuration\n")
+		}
+	}
+
+	sec.NewKey("forgetype", forgetype)
+	sec.NewKey("childremote", child)
+	sec.NewKey("parentremote", parent)
+
+	return nil
 }
 
 func (f *ForgeConfig) CommitConfig() error {
