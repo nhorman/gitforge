@@ -15,8 +15,9 @@ type CloneOpts struct {
 }
 
 type ForkOpts struct {
-	Common CommonOpts
-	Url    string
+	Common    CommonOpts
+	Url       string
+	ForgeName string
 }
 
 type Forge interface {

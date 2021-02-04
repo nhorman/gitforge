@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"flag"
+	"git-forge/config"
 	"git-forge/forge"
 	"git-forge/log"
 	"os"
@@ -30,7 +31,21 @@ func ForkForgeCmd() error {
 	// last argument must be the url
 	url := os.Args[len(os.Args)-1]
 
+	fconfig, err := gitconfig.GetForgeConfigFromUrl(os.Getenv("HOME")+"/.gitconfig", url)
+	if err != nil {
+		return err
+	}
+
+	user, pass, cerr := fconfig.GetCreds()
+	if cerr != nil {
+		return cerr
+	}
+
 	opts := forge.ForkOpts{
+		Common: forge.CommonOpts{
+			User: user,
+			Pass: pass,
+		},
 		Url: url,
 	}
 	forge, err := AllocateForgeFromUrl(url)

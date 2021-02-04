@@ -1,6 +1,7 @@
 package bitbucketforge
 
 import (
+	"fmt"
 	"git-forge/cmds"
 	"git-forge/config"
 	"git-forge/forge"
@@ -112,5 +113,32 @@ func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
 }
 
 func (f *BitBucketForge) Fork(opts forge.ForkOpts) error {
+
+	c := bitbucket.NewBasicAuth(opts.Common.User, opts.Common.Pass)
+	// Indicate what repo we want
+	_, slug, owner, _ := getRepoSlugAndOwner(opts.Url)
+	bopts := &bitbucket.RepositoryOptions{
+		RepoSlug: slug,
+		Owner:    owner,
+	}
+
+	repo, rerr := c.Repositories.Repository.Get(bopts)
+	if rerr != nil {
+		return rerr
+	}
+	if repo == nil {
+		return fmt.Errorf("Unable to find repository %s/%s\n", owner, slug)
+	}
+
+	fConfig := &bitbucket.RepositoryForkOptions{
+		FromOwner: owner,
+		FromSlug:  slug,
+	}
+
+	frepo, ferr := c.Repositories.Repository.Fork(fConfig)
+	if ferr != nil {
+		return ferr
+	}
+	logging.Forgelog.Printf("Forked from repo %s to repo %s/%s\n", frepo.Parent.Links["html"].(map[string]interface{})["href"].(string), user, slug)
 	return nil
 }
