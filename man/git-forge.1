@@ -91,3 +91,36 @@ Display help text
 .B -name name
 The name of the forge to remove
 
+.TP
+.SS fork [-h] <url>
+
+The fork command creates a private copy of a repository in your own workspace 
+The url option is the git url that you with to make a copy of
+
+.TP
+.I Options
+
+.TP
+.B -h 
+Display help text
+
+.TP
+.SS clone [options] <url>
+
+The clone command creates a local copy of the url provided.  Its is a superset
+of the git clone command 
+
+.TP
+.I Options
+
+.TP
+.B -h 
+Display help text
+
+.TP
+.B --getparent
+When specified, look up the parent repository of the repo being cloned, and
+create a second remote leading to that parent.  By default the child and parent
+remotes are named origin and orign-parent.  This is useful when creating pull
+requests
+
