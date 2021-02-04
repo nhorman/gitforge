@@ -2,6 +2,7 @@ package bitbucketforge
 
 import (
 	"git-forge/cmds"
+	"git-forge/config"
 	"git-forge/forge"
 	"git-forge/log"
 	"github.com/ktrysmt/go-bitbucket"
@@ -94,6 +95,18 @@ func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
 			f.cleanup(dirname)
 			return remerr
 		}
+
+		cfg, ferr := gitconfig.NewForgeConfig("./" + dirname + "/.git/config")
+		if ferr != nil {
+			f.cleanup(dirname)
+			return ferr
+		}
+		cerr := cfg.AddForgeRemoteSection("bitbucket", "origin", "origin-parent")
+		if cerr != nil {
+			f.cleanup(dirname)
+			return cerr
+		}
+		defer cfg.CommitConfig()
 	}
 	return nil
 }
