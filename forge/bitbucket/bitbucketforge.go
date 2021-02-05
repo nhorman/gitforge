@@ -51,6 +51,27 @@ func (f *BitBucketForge) cleanup(dirname string) error {
 	return os.RemoveAll(dirname)
 }
 
+func (f *BitBucketForge) InitForges(config *gitconfig.ForgeConfig) error {
+
+	// We want to register the standard forges for bitbucket org as both
+	// a git@ prefix and an https prefix
+	config.AddForge("bitbucket-ssh",
+		"bitbucket",
+		"git@bitbucket.org",
+		"api.bitbucket.org/2.0",
+		"USERNAMEHERE",
+		"PASSWORDHERE")
+
+	config.AddForge("bitbucket-https",
+		"bitbucket",
+		"https://USERNAME@bitbucket.org",
+		"api.bitbucket.org/2.0",
+		"USERNAMEHERE",
+		"PASSWORDHERE")
+
+	return nil
+}
+
 func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
 	logging.Forgelog.Printf("%s appears to be a bitbucket forge\n", opts.Url)
 

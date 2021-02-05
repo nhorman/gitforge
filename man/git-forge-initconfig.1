@@ -1,0 +1,36 @@
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "git-forge-initconfig" 1 "Jan 2021" "Linux" "git-forge-initconfig"
+.SH NAME
+git-forge-initconfig \- set up a users ~/.gitconfig with standard forge types 
+.SH "SYNOPSIS"
+
+.nf
+\fBgit forge initconfig\fR
+.fi
+
+.SH "DESCRIPTION"
+
+.PP
+Configure the standard forge types and prefixes in a users global ~/.gitconfig
+
+.SH "USAGE"
+.TP
+.SS git forge initconfig 
+
