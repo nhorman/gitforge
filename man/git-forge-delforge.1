@@ -1,0 +1,51 @@
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "git-forge-delforge" 1 "Jan 2021" "Linux" "git-forge-delforge"
+.SH NAME
+git-forge-delforge \- Remove a forge configuration from the users global
+gitconfig 
+.SH "SYNOPSIS"
+
+.nf
+\fBgit forge delforge [options]\fR
+.fi
+
+.SH "DESCRIPTION"
+
+.PP
+git forge delforge updates the users global .gitconfig file, removing an
+instance of a forge config
+
+.SH "USAGE"
+.TP
+.SS delforge [-h] <-name name>
+
+The delforge command removes a forge reference from your global gitconfig
+
+.TP
+.I Options
+
+.TP
+.B -h 
+Display help text
+
+.TP
+.B -name name
+The name of the forge to remove
+

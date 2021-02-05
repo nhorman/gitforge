@@ -1,0 +1,72 @@
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "git-forge-addforge" 1 "Jan 2021" "Linux" "git-forge"
+.SH NAME
+git-forge-addforge \- Add configuration for a given forge server 
+.SH "SYNOPSIS"
+
+.nf
+\fBgit forge addforge [options]\fR
+.fi
+
+.SH "DESCRIPTION"
+git forge addforge updates the users global gitconfig file, associating a given
+url prefix with a type of git forge (bitbucket/github/gitlab/etc).  It also
+stores access credentials so that modifications to the users git data may be
+made on the server 
+
+.PP
+.SH "USAGE"
+.TP
+.SS addforge [-h] <-apiurl url> <--cloneurl url> <--name name> <--type type> <--user user> <--pass password>
+
+The addforge subcommand adds to your global gitconfig file a forge entry, which stores information regarding a given forge for later use
+
+.TP
+.I Options
+.TP
+.B -h 
+display help on this command
+
+.TP
+.B -apiurl url
+The base url for the REST api endpont of the forge being added (i.e. -apiurl
+https://api.bitbucket.org/api/2)
+
+.TP
+.B -cloneurl url
+The base url from which repositories from the forge are cloned (i.e. -cloneurl
+https://bitbucket.org)
+
+.TP
+.B -name name
+A descriptive name to give the forge (used in the delete command)
+
+.TP
+.B -type type
+A string representing the forge type (bitbucket / github / gitlab) etc.  Used by
+the tool to determine the specific forge driver when using other commands
+
+.TP
+.B --user username
+The username you use to authenticate to the forge
+
+.TP
+.B --pass password
+The passsword you use to authenticate to the forge

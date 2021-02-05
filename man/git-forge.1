@@ -43,53 +43,9 @@ in a browser, or having to remember the specifics of that forges workflow
 The addforge subcommand adds to your global gitconfig file a forge entry, which stores information regarding a given forge for later use
 
 .TP
-.I Options
-.TP
-.B -h 
-display help on this command
-
-.TP
-.B -apiurl url
-The base url for the REST api endpont of the forge being added (i.e. -apiurl
-https://api.bitbucket.org/api/2)
-
-.TP
-.B -cloneurl url
-The base url from which repositories from the forge are cloned (i.e. -cloneurl
-https://bitbucket.org)
-
-.TP
-.B -name name
-A descriptive name to give the forge (used in the delete command)
-
-.TP
-.B -type type
-A string representing the forge type (bitbucket / github / gitlab) etc.  Used by
-the tool to determine the specific forge driver when using other commands
-
-.TP
-.B --user username
-The username you use to authenticate to the forge
-
-.TP
-.B --pass password
-The passsword you use to authenticate to the forge
-
-.TP
 .SS delforge [-h] <-name name>
-
-The delforge command removes a forge reference from your global gitconfig
-
-.TP
-.I Options
-
-.TP
-.B -h 
-Display help text
-
-.TP
-.B -name name
-The name of the forge to remove
+The delforge subcommand removes the forge configurations from your gitconfig
+file, referenced by the name option as provided in the addforge command
 
 .TP
 .SS fork [-h] <url>
@@ -98,29 +54,9 @@ The fork command creates a private copy of a repository in your own workspace
 The url option is the git url that you with to make a copy of
 
 .TP
-.I Options
-
-.TP
-.B -h 
-Display help text
-
-.TP
 .SS clone [options] <url>
 
 The clone command creates a local copy of the url provided.  Its is a superset
 of the git clone command 
 
-.TP
-.I Options
-
-.TP
-.B -h 
-Display help text
-
-.TP
-.B --getparent
-When specified, look up the parent repository of the repo being cloned, and
-create a second remote leading to that parent.  By default the child and parent
-remotes are named origin and orign-parent.  This is useful when creating pull
-requests
 

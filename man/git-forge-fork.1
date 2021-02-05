@@ -1,0 +1,47 @@
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "git-forge-fork" 1 "Jan 2021" "Linux" "git-forge-fork"
+.SH NAME
+git-forge-fork \- create a forked repository under user control on forge server 
+.SH "SYNOPSIS"
+
+.nf
+\fBgit forge fork [options]\fR
+.fi
+
+.SH "DESCRIPTION"
+
+.PP
+Contact the git forge associated with the provided url and fork the referenced
+repository into the configured users private workspace
+
+.SH "USAGE"
+.TP
+.SS git forge fork [-h] <url>
+
+The fork command creates a private copy of a repository in your own workspace 
+The url option is the git url that you with to make a copy of
+
+.TP
+.I Options
+
+.TP
+.B -h 
+Display help text
+
