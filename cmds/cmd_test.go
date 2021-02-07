@@ -10,13 +10,23 @@ import (
 	"git-forge/log"
 )
 
+// This sets up our dummy forge driver and implicitly tests
+// the addforge command
 func TestMain(m *testing.M) {
 	logging.SuppressLog()
 	terr := ForgeInitCmd()
 	if terr != nil {
-		fmt.Printf("Testing setup failsi: %s\n", terr)
+		fmt.Printf("Testing setup fails: %s\n", terr)
 		os.Exit(1)
 	}
+}
+
+func TestForkCmd(t *testing.T) {
+	return
+}
+
+func TestCloneCmd(t *testing.T) {
+	return
 }
 
 func TestDelForgeCmd(t *testing.T) {
