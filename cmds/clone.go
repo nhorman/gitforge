@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	RegisterCmd("clone", CloneForgeCmd)
+	RegisterCmd("clone", CloneForgeCmd, []string{"clone", "-getparent", "git@dummy.org:childtestuser/testrepo.git"})
 }
 
 func Cloneusage() {

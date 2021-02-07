@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	RegisterCmd("delforge", DelForgeCmd)
+	RegisterCmd("delforge", DelForgeCmd, []string{"delforge", "--name", "dummy-ssh"})
 }
 
 func Delusage() {

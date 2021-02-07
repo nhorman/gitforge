@@ -7,13 +7,13 @@ import (
 	"testing"
 
 	_ "git-forge/forge/dummy"
-	"git-forge/log"
+	//"git-forge/log"
 )
 
 // This sets up our dummy forge driver and implicitly tests
 // the addforge command
 func TestMain(m *testing.M) {
-	logging.SuppressLog()
+	//logging.SuppressLog()
 	terr := ForgeInitCmd()
 	if terr != nil {
 		fmt.Printf("Testing setup fails: %s\n", terr)
@@ -21,24 +21,22 @@ func TestMain(m *testing.M) {
 	}
 }
 
-func TestForkCmd(t *testing.T) {
-	return
-}
+func TestCmds(t *testing.T) {
 
-func TestCloneCmd(t *testing.T) {
-	return
-}
+	cwd, wderr := os.Getwd()
+	if wderr != nil {
+		t.Errorf("unable to set HOME directory, can't run tests\n")
+	}
 
-func TestDelForgeCmd(t *testing.T) {
-
-	t.Log("Testing delforge cmd\n")
-	// This should have been registered by the TestInitCmd test above
-	os.Args = []string{"delforge", "-name", "dummy-ssh"}
-	// Need to reset the CommandLine flag set
-	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-
-	terr := DelForgeCmd()
-	if terr != nil {
-		t.Errorf("DelForgeCmd Fails: %s\n", terr)
+	os.Setenv("HOME", cwd)
+	t.Log("Testing commands\n")
+	for n, c := range Subcmds {
+		t.Logf("Testing %s cmd\n", n)
+		os.Args = c.testargs
+		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+		terr := c.Cmd()
+		if terr != nil {
+			t.Errorf("%s Fails: %s\n", n, terr)
+		}
 	}
 }

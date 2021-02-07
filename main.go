@@ -41,7 +41,7 @@ func main() {
 	// Advance out argument list so that the stupid go flag parser doesnt
 	// get all confused
 	os.Args = os.Args[1:]
-	err := cmd()
+	err := cmd.Cmd()
 	if err != nil {
 		logging.Forgelog.Printf("%s failed: %s\n", cmdname, err)
 		os.Exit(1)

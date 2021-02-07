@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	RegisterCmd("fork", ForkForgeCmd)
+	RegisterCmd("fork", ForkForgeCmd, []string{"fork", "git@dummy.org:testuser/testrepo.git"})
 }
 
 func Forkusage() {

@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	RegisterCmd("addforge", AddForgeCmd)
+	RegisterCmd("addforge", AddForgeCmd, []string{"addforge", "-name", "dummy-http"})
 }
 
 func Addusage() {

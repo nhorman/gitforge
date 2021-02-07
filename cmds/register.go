@@ -2,8 +2,13 @@ package cmds
 
 import ()
 
-var Subcmds map[string]func() error = make(map[string]func() error, 0)
+type CmdData struct {
+	Cmd      func() error
+	testargs []string
+}
 
-func RegisterCmd(cmd string, ifunc func() error) {
-	Subcmds[cmd] = ifunc
+var Subcmds map[string]CmdData = make(map[string]CmdData, 0)
+
+func RegisterCmd(cmd string, ifunc func() error, testargs []string) {
+	Subcmds[cmd] = CmdData{ifunc, testargs}
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	RegisterCmd("initconfig", ForgeInitCmd)
+	RegisterCmd("initconfig", ForgeInitCmd, []string{"initconfig"})
 }
 
 func initusage() {
