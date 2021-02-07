@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gopkg.in/ini.v1"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -48,12 +49,16 @@ func LookupForgeName(url string) (string, error) {
 }
 
 func NewForgeConfig(path string) (*ForgeConfig, error) {
-	cfg, err := ini.Load(path)
+	abspath, err := filepath.Abs(path)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to open %s: %s\n", path, err)
+		return nil, fmt.Errorf("Unalbe to open %s: %s\n", abspath, err)
+	}
+	cfg, err := ini.Load(abspath)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to open %s: %s\n", abspath, err)
 	}
 	return &ForgeConfig{
-		path: path,
+		path: abspath,
 		cfg:  cfg,
 		sec:  nil,
 	}, nil
@@ -74,7 +79,7 @@ func GetForgeConfig(path string, name string) (*ForgeConfig, error) {
 		fname := strings.Trim(strings.SplitAfter(sec.Name(), " ")[1], "\"")
 		if name == fname {
 			return &ForgeConfig{
-				path: "~/.gitconfig",
+				path: os.Getenv("HOME") + "/.gitconfig",
 				cfg:  cfg,
 				sec:  sec,
 			}, nil
@@ -159,8 +164,15 @@ func (f *ForgeConfig) LookupForgeName(url string) (string, error) {
 }
 
 func (f *ForgeConfig) DelForge() error {
-	name := f.sec.Name()
-	f.cfg.DeleteSection("forge \"" + name + "\"")
+	if f.sec == nil {
+		return fmt.Errorf("No such Forge configured by that name\n")
+	}
+	name := strings.Trim(strings.SplitAfter(f.sec.Name(), " ")[1], "\"")
+	fmt.Printf("Removing %s from %s\n", name, f.path)
+	err := f.cfg.DeleteSectionWithIndex("forge \""+name+"\"", 0)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

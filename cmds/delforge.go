@@ -39,7 +39,7 @@ func DelForgeCmd() error {
 
 	ferr := forgeconfig.DelForge()
 	if ferr != nil {
-		return fmt.Errorf("Failed to add forge: %s\n", ferr)
+		return fmt.Errorf("Failed to delete forge: %s\n", ferr)
 	}
 
 	return nil
