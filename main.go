@@ -7,6 +7,7 @@ import (
 
 	// imports for forge registrations
 	_ "git-forge/forge/bitbucket"
+	_ "git-forge/forge/github"
 )
 
 func usage() error {
