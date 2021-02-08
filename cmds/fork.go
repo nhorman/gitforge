@@ -8,8 +8,10 @@ import (
 	"os"
 )
 
+var forkDeps = TestData{[]string{"fork", "git@dummy.org:testuser/testrepo.git"}, []string{"initconfig"}, false}
+
 func init() {
-	RegisterCmd("fork", ForkForgeCmd, []string{"fork", "git@dummy.org:testuser/testrepo.git"})
+	RegisterCmd("fork", ForkForgeCmd, &forkDeps)
 }
 
 func Forkusage() {

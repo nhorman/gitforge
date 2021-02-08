@@ -7,8 +7,10 @@ import (
 	"os"
 )
 
+var initConfigDeps = TestData{[]string{}, []string{}, true}
+
 func init() {
-	RegisterCmd("initconfig", ForgeInitCmd, []string{"initconfig"})
+	RegisterCmd("initconfig", ForgeInitCmd, &initConfigDeps)
 }
 
 func initusage() {
@@ -38,7 +40,7 @@ func ForgeInitCmd() error {
 		forge := f()
 		ferr := forge.InitForges(config)
 		if ferr != nil {
-			logging.Forgelog.Printf("Failed to configure %s\n", k)
+			logging.Forgelog.Printf("Failed to configure %s: %s\n", k, ferr)
 		}
 	}
 

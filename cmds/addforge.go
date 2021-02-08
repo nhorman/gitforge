@@ -8,8 +8,10 @@ import (
 	"os"
 )
 
+var addForgeDeps = TestData{[]string{"addforge", "-name", "dummy-http"}, []string{"initconfig"}, false}
+
 func init() {
-	RegisterCmd("addforge", AddForgeCmd, []string{"addforge", "-name", "dummy-http"})
+	RegisterCmd("addforge", AddForgeCmd, &addForgeDeps)
 }
 
 func Addusage() {

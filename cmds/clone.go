@@ -8,8 +8,10 @@ import (
 	"os"
 )
 
+var cloneDeps = TestData{[]string{"clone", "-getparent", "git@dummy.org:childtestuser/testrepo.git"}, []string{"initconfig"}, false}
+
 func init() {
-	RegisterCmd("clone", CloneForgeCmd, []string{"clone", "-getparent", "git@dummy.org:childtestuser/testrepo.git"})
+	RegisterCmd("clone", CloneForgeCmd, &cloneDeps)
 }
 
 func Cloneusage() {
@@ -21,7 +23,7 @@ func Cloneusage() {
 
 func CloneForgeCmd() error {
 
-	helpopt := flag.Bool("help", false, "display help for addforge command")
+	helpopt := flag.Bool("help", false, "display help for clone command")
 	parentopt := flag.Bool("getparent", false, "Find the parent of this repo, and add a remote for it")
 	flag.Parse()
 

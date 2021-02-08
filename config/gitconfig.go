@@ -111,7 +111,7 @@ func (f *ForgeConfig) AddForge(name string, forgetype string, cloneUrl string, a
 	sec, err = f.cfg.GetSection("forge \"" + name + "\"")
 	if err == nil {
 		// We found the section, so this is a duplicate
-		return fmt.Errorf("Forge %s can't be created: %s\n", name, err)
+		return fmt.Errorf("Forge %s can't be created: Already Exists\n", name)
 	}
 
 	sec, err = f.cfg.NewSection("forge \"" + name + "\"")

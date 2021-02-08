@@ -8,8 +8,10 @@ import (
 	"os"
 )
 
+var delForgeDeps = TestData{[]string{"delforge", "--name", "dummy-ssh"}, []string{"fork", "clone", "addforge", "initconfig"}, false}
+
 func init() {
-	RegisterCmd("delforge", DelForgeCmd, []string{"delforge", "--name", "dummy-ssh"})
+	RegisterCmd("delforge", DelForgeCmd, &delForgeDeps)
 }
 
 func Delusage() {
@@ -21,7 +23,7 @@ func Delusage() {
 
 func DelForgeCmd() error {
 
-	helpopt := flag.Bool("help", false, "display help for addforge command")
+	helpopt := flag.Bool("help", false, "display help for delforge command")
 	nameopt := flag.String("name", "", "Name of the forge to delete")
 	flag.Parse()
 
