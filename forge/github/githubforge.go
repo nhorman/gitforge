@@ -2,14 +2,15 @@ package githubforge
 
 import (
 	//"fmt"
+	"context"
 	"git-forge/cmds"
 	"git-forge/config"
 	"git-forge/forge"
 	"git-forge/log"
 
-	//"github.com/google/go-github/v32/github"
+	"github.com/google/go-github/v33/github"
 	"gopkg.in/src-d/go-git.v4"
-	//"gopkg.in/src-d/go-git.v4/config"
+	"gopkg.in/src-d/go-git.v4/config"
 
 	"os"
 	"path"
@@ -32,22 +33,11 @@ func NewGitHubForge() forge.Forge {
 
 }
 
-//func getRepoSlugAndOwner(url string) (string, string, string, error) {
-//	var owner string
-//	base := path.Base(url)
-//	slug := strings.TrimSuffix(base, filepath.Ext(base))
-//	noslugurl := strings.TrimSuffix(url, base)
-//	owner = path.Base(noslugurl)
-//
-//	// Need to see if we need to trim any git@ crap from the owner string
-//	if strings.HasPrefix(owner, "git@") == true {
-//		// we have to chop off everthing up to the ':'
-//		idx := strings.Index(owner, ":")
-//		owner = owner[idx+1:]
-//	}
-//	finalbaseurl := strings.TrimSuffix(noslugurl, owner)
-//	return finalbaseurl, slug, owner, nil
-//}
+func getRepoSlug(url string) (string, error) {
+	base := path.Base(url)
+	slug := strings.TrimSuffix(base, filepath.Ext(base))
+	return slug, nil
+}
 
 func (f *GitHubForge) cleanup(dirname string) error {
 	return os.RemoveAll(dirname)
@@ -84,13 +74,37 @@ func (f *GitHubForge) Clone(opts forge.CloneOpts) error {
 	}
 
 	// Start by cloning the repository requested
-	_, clonerr := git.PlainClone("./"+dirname, false, &git.CloneOptions{
+	lrepo, clonerr := git.PlainClone("./"+dirname, false, &git.CloneOptions{
 		URL: opts.Url})
 	if clonerr != nil {
 		return clonerr
 	}
 
 	if opts.Parentfork == true {
+		transport := &github.BasicAuthTransport{
+			Username: opts.Common.User,
+			Password: opts.Common.Pass,
+		}
+
+		client := github.NewClient(transport.Client())
+		ctx := context.Background()
+		slug, _ := getRepoSlug(opts.Url)
+		repo, _, err := client.Repositories.Get(ctx, opts.Common.User, slug)
+		if err != nil {
+			return err
+		}
+		prepo := repo.GetParent()
+
+		rConfig := &config.RemoteConfig{
+			Name: "origin-parent",
+			URLs: []string{*prepo.CloneURL},
+		}
+
+		_, remerr := lrepo.CreateRemote(rConfig)
+		if remerr != nil {
+			return remerr
+		}
+
 	}
 	return nil
 }
