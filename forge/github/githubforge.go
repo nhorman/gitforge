@@ -9,8 +9,8 @@ import (
 	"git-forge/log"
 
 	"github.com/google/go-github/v33/github"
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/config"
+	//"gopkg.in/src-d/go-git.v4"
+	//"gopkg.in/src-d/go-git.v4/config"
 
 	"os"
 	"path"
@@ -26,10 +26,11 @@ func init() {
 }
 
 type GitHubForge struct {
+	forge *forge.ForgeObj
 }
 
 func NewGitHubForge() forge.Forge {
-	return &GitHubForge{}
+	return &GitHubForge{&forge.ForgeObj{}}
 
 }
 
@@ -68,14 +69,9 @@ func (f *GitHubForge) Clone(opts forge.CloneOpts) error {
 	logging.Forgelog.Printf("%s appears to be a github forge\n", opts.Url)
 
 	dirname := strings.TrimSuffix(path.Base(opts.Url), filepath.Ext(path.Base(opts.Url)))
-	err := os.Mkdir("./"+dirname, 0755)
-	if err != nil {
-		return err
-	}
 
 	// Start by cloning the repository requested
-	lrepo, clonerr := git.PlainClone("./"+dirname, false, &git.CloneOptions{
-		URL: opts.Url})
+	_, clonerr := f.forge.CreateLocalRepo(dirname, false, opts.Url)
 	if clonerr != nil {
 		return clonerr
 	}
@@ -91,20 +87,22 @@ func (f *GitHubForge) Clone(opts forge.CloneOpts) error {
 		slug, _ := getRepoSlug(opts.Url)
 		repo, _, err := client.Repositories.Get(ctx, opts.Common.User, slug)
 		if err != nil {
+			f.cleanup(dirname)
 			return err
 		}
 		prepo := repo.GetParent()
 
-		rConfig := &config.RemoteConfig{
-			Name: "origin-parent",
-			URLs: []string{*prepo.CloneURL},
-		}
-
-		_, remerr := lrepo.CreateRemote(rConfig)
+		_, remerr := f.forge.CreateRemote("origin-parent", *prepo.CloneURL)
 		if remerr != nil {
+			f.cleanup(dirname)
 			return remerr
 		}
 
+		ferr := f.forge.CreateForgeConfig(opts.ForgeName, "origin", "origin-parent")
+		if ferr != nil {
+			f.cleanup(dirname)
+			return ferr
+		}
 	}
 	return nil
 }

@@ -7,8 +7,8 @@ import (
 	"git-forge/forge"
 	"git-forge/log"
 	"github.com/ktrysmt/go-bitbucket"
-	"gopkg.in/src-d/go-git.v4"
-	"gopkg.in/src-d/go-git.v4/config"
+	//"gopkg.in/src-d/go-git.v4"
+	//"gopkg.in/src-d/go-git.v4/config"
 	"os"
 	"path"
 	"path/filepath"
@@ -23,10 +23,11 @@ func init() {
 }
 
 type BitBucketForge struct {
+	forge *forge.ForgeObj
 }
 
 func NewBitBucketForge() forge.Forge {
-	return &BitBucketForge{}
+	return &BitBucketForge{&forge.ForgeObj{}}
 
 }
 
@@ -76,14 +77,9 @@ func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
 	logging.Forgelog.Printf("%s appears to be a bitbucket forge\n", opts.Url)
 
 	dirname := strings.TrimSuffix(path.Base(opts.Url), filepath.Ext(path.Base(opts.Url)))
-	err := os.Mkdir("./"+dirname, 0755)
-	if err != nil {
-		return err
-	}
 
 	// Start by cloning the repository requested
-	lrepo, clonerr := git.PlainClone("./"+dirname, false, &git.CloneOptions{
-		URL: opts.Url})
+	_, clonerr := f.forge.CreateLocalRepo(dirname, false, opts.Url)
 	if clonerr != nil {
 		return clonerr
 	}
@@ -106,29 +102,17 @@ func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
 
 		parentCloneUrl := repo.Parent.Links["html"].(map[string]interface{})["href"].(string)
 
-		rConfig := &config.RemoteConfig{
-			Name: "origin-parent",
-			URLs: []string{parentCloneUrl},
-		}
-
-		logging.Forgelog.Printf("Adding parent of origin as origin-parent\n")
-		_, remerr := lrepo.CreateRemote(rConfig)
+		_, remerr := f.forge.CreateRemote("origin-remote", parentCloneUrl)
 		if remerr != nil {
 			f.cleanup(dirname)
 			return remerr
 		}
 
-		cfg, ferr := gitconfig.NewForgeConfig("./" + dirname + "/.git/config")
+		ferr := f.forge.CreateForgeConfig(opts.ForgeName, "origin", "origin-parent")
 		if ferr != nil {
 			f.cleanup(dirname)
 			return ferr
 		}
-		cerr := cfg.AddForgeRemoteSection(opts.ForgeName, "origin", "origin-parent")
-		if cerr != nil {
-			f.cleanup(dirname)
-			return cerr
-		}
-		defer cfg.CommitConfig()
 	}
 	return nil
 }
