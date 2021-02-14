@@ -109,5 +109,21 @@ func (f *GitHubForge) Clone(opts forge.CloneOpts) error {
 
 func (f *GitHubForge) Fork(opts forge.ForkOpts) error {
 
+	transport := &github.BasicAuthTransport{
+		Username: opts.Common.User,
+		Password: opts.Common.Pass,
+	}
+
+	client := github.NewClient(transport.Client())
+	ctx := context.Background()
+
+	slug, _ := getRepoSlug(opts.Url)
+	_, resp, err := client.Repositories.CreateFork(ctx, opts.Common.User, slug, &github.RepositoryCreateForkOptions{})
+	if err != nil {
+		if resp.StatusCode != 202 {
+			return err
+		}
+	}
+	logging.Forgelog.Printf("Forked from repo %s to repo %s/%s\n", slug, opts.Common.User, slug)
 	return nil
 }
