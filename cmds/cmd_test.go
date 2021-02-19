@@ -14,6 +14,7 @@ import (
 // the addforge command
 func TestMain(m *testing.M) {
 
+	os.Remove("./.gitconfig")
 	f, serr := os.OpenFile("./.gitconfig", os.O_CREATE, 0666)
 	if serr != nil {
 		fmt.Printf("Unable to setup test: %s\n", serr)

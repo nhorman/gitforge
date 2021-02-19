@@ -1,19 +1,26 @@
 package dummyforge
 
 import (
-	"git-forge/config"
+	"git-forge/configset"
 	"git-forge/forge"
 )
 
 type DummyForge struct {
+	cfg *forge.ForgeConfig
 }
 
-func NewDummyForge() forge.Forge {
-	return &DummyForge{}
+func NewDummyForge(cfg *forge.ForgeConfig) forge.Forge {
+	return &DummyForge{cfg}
 
 }
 
-func (f *DummyForge) InitForges(config *gitconfig.ForgeConfig) error {
+func (f *DummyForge) InitForges() error {
+
+	config, cerr := gitconfigset.NewForgeConfigSet()
+	if cerr != nil {
+		return cerr
+	}
+	defer config.CommitConfig()
 
 	// We want to register the standard forges for bitbucket org as both
 	// a git@ prefix and an https prefix

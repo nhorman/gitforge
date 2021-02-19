@@ -2,7 +2,6 @@ package cmds
 
 import (
 	"flag"
-	"git-forge/config"
 	"git-forge/forge"
 	"git-forge/log"
 	"os"
@@ -34,32 +33,13 @@ func CloneForgeCmd() error {
 	// last argument must be the url
 	url := os.Args[len(os.Args)-1]
 
-	fconfig, err := gitconfig.GetForgeConfigFromUrl(os.Getenv("HOME")+"/.gitconfig", url)
-	if err != nil {
-		return err
-	}
-
-	user, pass, cerr := fconfig.GetCreds()
-	if cerr != nil {
-		return cerr
-	}
-
-	fname, ferr := gitconfig.LookupForgeName(url)
-	if ferr != nil {
-		return ferr
-	}
 	cloneopts := forge.CloneOpts{
-		Common: forge.CommonOpts{
-			User: user,
-			Pass: pass,
-		},
 		Parentfork: *parentopt,
 		Url:        url,
-		ForgeName:  fname,
 	}
 
 	forge, err2 := AllocateForgeFromUrl(url)
-	if err != nil {
+	if err2 != nil {
 		return err2
 	}
 

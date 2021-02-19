@@ -3,7 +3,7 @@ package bitbucketforge
 import (
 	"fmt"
 	"git-forge/cmds"
-	"git-forge/config"
+	"git-forge/configset"
 	"git-forge/forge"
 	"git-forge/log"
 	"github.com/ktrysmt/go-bitbucket"
@@ -24,10 +24,11 @@ func init() {
 
 type BitBucketForge struct {
 	forge *forge.ForgeObj
+	cfg   *forge.ForgeConfig
 }
 
-func NewBitBucketForge() forge.Forge {
-	return &BitBucketForge{&forge.ForgeObj{}}
+func NewBitBucketForge(cfg *forge.ForgeConfig) forge.Forge {
+	return &BitBucketForge{&forge.ForgeObj{}, cfg}
 
 }
 
@@ -52,7 +53,12 @@ func (f *BitBucketForge) cleanup(dirname string) error {
 	return os.RemoveAll(dirname)
 }
 
-func (f *BitBucketForge) InitForges(config *gitconfig.ForgeConfig) error {
+func (f *BitBucketForge) InitForges() error {
+
+	config, err := gitconfigset.NewForgeConfigSet()
+	if err != nil {
+		return err
+	}
 
 	// We want to register the standard forges for bitbucket org as both
 	// a git@ prefix and an https prefix
@@ -86,7 +92,7 @@ func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
 
 	if opts.Parentfork == true {
 		// now get us our auth token for the bitbucket api
-		c := bitbucket.NewBasicAuth(opts.Common.User, opts.Common.Pass)
+		c := bitbucket.NewBasicAuth(f.cfg.User, f.cfg.Pass)
 		// Indicate what repo we want
 		_, slug, owner, _ := getRepoSlugAndOwner(opts.Url)
 		bopts := &bitbucket.RepositoryOptions{
@@ -108,7 +114,14 @@ func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
 			return remerr
 		}
 
-		ferr := f.forge.CreateForgeConfig(opts.ForgeName, "origin", "origin-parent")
+		cfg, err := gitconfigset.NewForgeConfigSet()
+		if err != nil {
+			f.cleanup(dirname)
+			return err
+		}
+		defer cfg.CommitConfig()
+
+		ferr := cfg.AddForgeRemoteSection(f.cfg.Type, "origin", "origin-remote")
 		if ferr != nil {
 			f.cleanup(dirname)
 			return ferr
@@ -119,7 +132,7 @@ func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
 
 func (f *BitBucketForge) Fork(opts forge.ForkOpts) error {
 
-	c := bitbucket.NewBasicAuth(opts.Common.User, opts.Common.Pass)
+	c := bitbucket.NewBasicAuth(f.cfg.User, f.cfg.Pass)
 	// Indicate what repo we want
 	_, slug, owner, _ := getRepoSlugAndOwner(opts.Url)
 	bopts := &bitbucket.RepositoryOptions{
@@ -162,17 +175,23 @@ func (f *BitBucketForge) CreatePr(opts forge.CreatePrOpts) error {
 		return fmt.Errorf("Push Failed: %s\n", err)
 	}
 
-	fcfg, ferr := f.forge.GetForgeConfig()
+	cfg, err := gitconfigset.NewForgeConfigSet()
+	if err != nil {
+		return err
+	}
+	defer cfg.CommitConfig()
+
+	childurl, _, ferr := cfg.GetForgeRemoteUrls()
 	if ferr != nil {
 		return fmt.Errorf("Forge config is busted: %s\n", ferr)
 	}
 
-	c := bitbucket.NewBasicAuth(opts.Common.User, opts.Common.Pass)
+	c := bitbucket.NewBasicAuth(f.cfg.User, f.cfg.Pass)
 	// Indicate what repo we want
-	_, slug, _, _ := getRepoSlugAndOwner(fcfg.Child.Url)
+	_, slug, _, _ := getRepoSlugAndOwner(childurl)
 
 	propts := &bitbucket.PullRequestsOptions{
-		Owner:             opts.Common.User,
+		Owner:             f.cfg.User,
 		RepoSlug:          slug,
 		SourceBranch:      opts.Sbranch,
 		DestinationBranch: opts.Tbranch,

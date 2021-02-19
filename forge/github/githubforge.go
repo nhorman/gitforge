@@ -4,7 +4,7 @@ import (
 	//"fmt"
 	"context"
 	"git-forge/cmds"
-	"git-forge/config"
+	"git-forge/configset"
 	"git-forge/forge"
 	"git-forge/log"
 
@@ -27,10 +27,11 @@ func init() {
 
 type GitHubForge struct {
 	forge *forge.ForgeObj
+	cfg   *forge.ForgeConfig
 }
 
-func NewGitHubForge() forge.Forge {
-	return &GitHubForge{&forge.ForgeObj{}}
+func NewGitHubForge(cfg *forge.ForgeConfig) forge.Forge {
+	return &GitHubForge{&forge.ForgeObj{}, cfg}
 
 }
 
@@ -44,7 +45,12 @@ func (f *GitHubForge) cleanup(dirname string) error {
 	return os.RemoveAll(dirname)
 }
 
-func (f *GitHubForge) InitForges(config *gitconfig.ForgeConfig) error {
+func (f *GitHubForge) InitForges() error {
+
+	config, err := gitconfigset.NewForgeConfigSet()
+	if err != nil {
+		return nil
+	}
 
 	// We want to register the standard forges for bitbucket org as both
 	// a git@ prefix and an https prefix
@@ -78,14 +84,14 @@ func (f *GitHubForge) Clone(opts forge.CloneOpts) error {
 
 	if opts.Parentfork == true {
 		transport := &github.BasicAuthTransport{
-			Username: opts.Common.User,
-			Password: opts.Common.Pass,
+			Username: f.cfg.User,
+			Password: f.cfg.Pass,
 		}
 
 		client := github.NewClient(transport.Client())
 		ctx := context.Background()
 		slug, _ := getRepoSlug(opts.Url)
-		repo, _, err := client.Repositories.Get(ctx, opts.Common.User, slug)
+		repo, _, err := client.Repositories.Get(ctx, f.cfg.User, slug)
 		if err != nil {
 			f.cleanup(dirname)
 			return err
@@ -98,7 +104,13 @@ func (f *GitHubForge) Clone(opts forge.CloneOpts) error {
 			return remerr
 		}
 
-		ferr := f.forge.CreateForgeConfig(opts.ForgeName, "origin", "origin-parent")
+		cfg, err := gitconfigset.NewForgeConfigSet()
+		if err != nil {
+			f.cleanup(dirname)
+			return err
+		}
+		defer cfg.CommitConfig()
+		ferr := cfg.AddForgeRemoteSection(f.cfg.Type, "origin", "origin-parent")
 		if ferr != nil {
 			f.cleanup(dirname)
 			return ferr
@@ -110,21 +122,21 @@ func (f *GitHubForge) Clone(opts forge.CloneOpts) error {
 func (f *GitHubForge) Fork(opts forge.ForkOpts) error {
 
 	transport := &github.BasicAuthTransport{
-		Username: opts.Common.User,
-		Password: opts.Common.Pass,
+		Username: f.cfg.User,
+		Password: f.cfg.Pass,
 	}
 
 	client := github.NewClient(transport.Client())
 	ctx := context.Background()
 
 	slug, _ := getRepoSlug(opts.Url)
-	_, resp, err := client.Repositories.CreateFork(ctx, opts.Common.User, slug, &github.RepositoryCreateForkOptions{})
+	_, resp, err := client.Repositories.CreateFork(ctx, f.cfg.User, slug, &github.RepositoryCreateForkOptions{})
 	if err != nil {
 		if resp.StatusCode != 202 {
 			return err
 		}
 	}
-	logging.Forgelog.Printf("Forked from repo %s to repo %s/%s\n", slug, opts.Common.User, slug)
+	logging.Forgelog.Printf("Forked from repo %s to repo %s/%s\n", slug, f.cfg.User, slug)
 	return nil
 }
 
@@ -134,12 +146,17 @@ func (f *GitHubForge) CreatePr(opts forge.CreatePrOpts) error {
 		return err
 	}
 
-	cfg, err := f.forge.GetForgeConfig()
+	cfg, err := gitconfigset.NewForgeConfigSet()
+	if err != nil {
+		return err
+	}
+	defer cfg.CommitConfig()
+	child, _, err := cfg.GetForgeRemoteSection()
 	if err != nil {
 		return err
 	}
 
-	err = f.forge.Push(cfg.Child.Name, opts.Sbranch, opts.Tbranch)
+	err = f.forge.Push(child, opts.Sbranch, opts.Tbranch)
 	if err != nil {
 		return err
 	}

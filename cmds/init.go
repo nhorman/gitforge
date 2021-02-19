@@ -2,9 +2,7 @@ package cmds
 
 import (
 	"flag"
-	"git-forge/config"
 	"git-forge/log"
-	"os"
 )
 
 var initConfigDeps = TestData{[]string{}, []string{}, true}
@@ -28,17 +26,10 @@ func ForgeInitCmd() error {
 		return nil
 	}
 
-	config, cerr := gitconfig.NewForgeConfig(os.Getenv("HOME") + "/.gitconfig")
-	if cerr != nil {
-		return cerr
-	}
-
-	defer config.CommitConfig()
-
 	for k, f := range forgetypes {
 		logging.Forgelog.Printf("Registering forge instances for %s type\n", k)
-		forge := f()
-		ferr := forge.InitForges(config)
+		forge := f(nil)
+		ferr := forge.InitForges()
 		if ferr != nil {
 			logging.Forgelog.Printf("Failed to configure %s: %s\n", k, ferr)
 		}

@@ -3,9 +3,8 @@ package cmds
 import (
 	"flag"
 	"fmt"
-	"git-forge/config"
+	"git-forge/configset"
 	"git-forge/log"
-	"os"
 )
 
 var delForgeDeps = TestData{[]string{"delforge", "--name", "dummy-ssh"}, []string{"fork", "clone", "addforge", "initconfig"}, false}
@@ -27,22 +26,17 @@ func DelForgeCmd() error {
 	nameopt := flag.String("name", "", "Name of the forge to delete")
 	flag.Parse()
 
-	gitconfigpath := os.Getenv("HOME") + "/.gitconfig"
 	if *helpopt == true {
 		Delusage()
 		return nil
 	}
 
-	forgeconfig, err := gitconfig.GetForgeConfig(gitconfigpath, *nameopt)
+	forgeconfig, err := gitconfigset.NewForgeConfigSet()
 	if err != nil {
 		return fmt.Errorf("Create forge config failed: %s\n", err)
 	}
 	defer forgeconfig.CommitConfig()
 
-	ferr := forgeconfig.DelForge()
-	if ferr != nil {
-		return fmt.Errorf("Failed to delete forge: %s\n", ferr)
-	}
+	return forgeconfig.DelForge(*nameopt)
 
-	return nil
 }

@@ -3,9 +3,8 @@ package cmds
 import (
 	"flag"
 	"fmt"
-	"git-forge/config"
+	"git-forge/configset"
 	"git-forge/log"
-	"os"
 )
 
 var addForgeDeps = TestData{[]string{"addforge", "-name", "dummy-http"}, []string{"initconfig"}, false}
@@ -34,13 +33,12 @@ func AddForgeCmd() error {
 
 	flag.Parse()
 
-	gitconfigpath := os.Getenv("HOME") + "/.gitconfig"
 	if *helpopt == true {
 		Addusage()
 		return nil
 	}
 
-	forgeconfig, err := gitconfig.NewForgeConfig(gitconfigpath)
+	forgeconfig, err := gitconfigset.NewForgeConfigSet()
 	if err != nil {
 		return fmt.Errorf("Create forge config failed: %s\n", err)
 	}
