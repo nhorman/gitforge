@@ -127,3 +127,22 @@ func (f *GitHubForge) Fork(opts forge.ForkOpts) error {
 	logging.Forgelog.Printf("Forked from repo %s to repo %s/%s\n", slug, opts.Common.User, slug)
 	return nil
 }
+
+func (f *GitHubForge) CreatePr(opts forge.CreatePrOpts) error {
+	_, err := f.forge.OpenLocalRepo()
+	if err != nil {
+		return err
+	}
+
+	cfg, err := f.forge.GetForgeConfig()
+	if err != nil {
+		return err
+	}
+
+	err = f.forge.Push(cfg.Child.Name, opts.Sbranch, opts.Tbranch)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

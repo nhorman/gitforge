@@ -1,6 +1,7 @@
 package forge
 
 import (
+	"fmt"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/config"
 	"os"
@@ -27,21 +28,47 @@ type ForkOpts struct {
 	ForgeName string
 }
 
+type CreatePrOpts struct {
+	Common      CommonOpts
+	Sbranch     string
+	Tbranch     string
+	Remote      string
+	Title       string
+	Description string
+}
+
+type ForgeConfig struct {
+}
+
 type Forge interface {
 	InitForges(config *gitconfig.ForgeConfig) error
 	Clone(opts CloneOpts) error
 	Fork(opts ForkOpts) error
+	CreatePr(opts CreatePrOpts) error
 }
 
 type LocalRepoOps interface {
 	CreateLocalRepo(name string, bare bool, url string) (*git.Repository, error)
+	OpenLocalRepo() (*git.Repository, error)
+	Push(remote string, sbranch string, tbranch string) error
 	CreateRemote(name string, url string) (*git.Remote, error)
 	CreateForgeConfig() error
+	GetForgeConfig() (ForgeConfig, error)
 }
 
 type ForgeObj struct {
 	dir   string
 	Lrepo *git.Repository
+}
+
+type RemoteInfo struct {
+	Name string
+	Url  string
+}
+
+type ForgeInfo struct {
+	Parent RemoteInfo
+	Child  RemoteInfo
 }
 
 //
@@ -60,6 +87,26 @@ func (f *ForgeObj) CreateLocalRepo(name string, bare bool, url string) (*git.Rep
 	f.Lrepo = lrepo
 	f.dir = name
 	return lrepo, nil
+}
+
+func (f *ForgeObj) OpenLocalRepo() (*git.Repository, error) {
+	lrepo, err := git.PlainOpenWithOptions("./", &git.PlainOpenOptions{DetectDotGit: true})
+	if err != nil {
+		return nil, err
+	}
+	f.dir = "./"
+	f.Lrepo = lrepo
+	return lrepo, err
+}
+
+func (f *ForgeObj) Push(remote string, sbranch string, tbranch string) error {
+	refspec := sbranch + ":" + tbranch
+
+	return f.Lrepo.Push(&git.PushOptions{
+		RemoteName: remote,
+		RefSpecs:   []config.RefSpec{config.RefSpec(refspec)},
+		Prune:      false,
+	})
 }
 
 func (f *ForgeObj) CreateRemote(name string, url string) (*git.Remote, error) {
@@ -88,4 +135,28 @@ func (f *ForgeObj) CreateForgeConfig(ftype string, child string, parent string) 
 	}
 	defer cfg.CommitConfig()
 	return nil
+}
+
+func (f *ForgeObj) GetForgeConfig() (*ForgeInfo, error) {
+	forge, err := gitconfig.NewLocalForgeConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	forgeinfo := &ForgeInfo{}
+	child, parent, rerr := forge.GetForgeRemoteSection()
+	if rerr != nil {
+		return nil, rerr
+	}
+
+	forgeinfo.Parent.Name = parent
+	forgeinfo.Child.Name = child
+	curl, cerr := forge.GetRemoteUrl(child)
+	purl, perr := forge.GetRemoteUrl(parent)
+	if cerr != nil || perr != nil {
+		return nil, fmt.Errorf("Unable to find remote urls\n")
+	}
+	forgeinfo.Parent.Url = purl
+	forgeinfo.Child.Url = curl
+	return forgeinfo, nil
 }

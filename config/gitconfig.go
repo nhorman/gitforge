@@ -15,6 +15,8 @@ type forgeconfig interface {
 	LookupForgeName(url string) (string, error)
 	GetCreds() (string, string, error)
 	AddForgeRemoteSection(string, string, string) error
+	GetForgeRemoteSection() (string, string, error)
+	GetRemoteUrl(string) (string, error)
 	CommitConfig() error
 }
 
@@ -22,6 +24,26 @@ type ForgeConfig struct {
 	path string
 	cfg  *ini.File
 	sec  *ini.Section
+}
+
+func findTopLevelGitDir(workingDir string) (string, error) {
+	dir, err := filepath.Abs(workingDir)
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
+			return dir, nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", fmt.Errorf("No git tree found\n")
+		}
+		dir = parent
+	}
+	return "", fmt.Errorf("No Git tree found\n")
 }
 
 func LookupForgeType(url string) (string, error) {
@@ -62,6 +84,15 @@ func NewForgeConfig(path string) (*ForgeConfig, error) {
 		cfg:  cfg,
 		sec:  nil,
 	}, nil
+}
+
+func NewLocalForgeConfig() (*ForgeConfig, error) {
+	gitdir, err := findTopLevelGitDir("./")
+
+	if err != nil {
+		return nil, err
+	}
+	return NewForgeConfig(gitdir + "/.git/config")
 }
 
 func GetForgeConfig(path string, name string) (*ForgeConfig, error) {
@@ -200,6 +231,33 @@ func (f *ForgeConfig) AddForgeRemoteSection(forgetype string, child string, pare
 	sec.NewKey("parentremote", parent)
 
 	return nil
+}
+
+func (f *ForgeConfig) GetForgeRemoteSection() (string, string, error) {
+	sec, serr := f.cfg.GetSection("forge")
+	if serr != nil {
+		return "", "", serr
+	}
+
+	childremote, cerr := sec.GetKey("childremote")
+	parentremote, perr := sec.GetKey("parentermote")
+	if cerr != nil || perr != nil {
+		return "", "", fmt.Errorf("Unable to get config keys for forge remotes\n")
+	}
+
+	return childremote.String(), parentremote.String(), nil
+}
+
+func (f *ForgeConfig) GetRemoteUrl(name string) (string, error) {
+	sec, err := f.cfg.GetSection("remote \"" + name + "\"")
+	if err != nil {
+		return "", nil
+	}
+	url, uerr := sec.GetKey("url")
+	if uerr != nil {
+		return "", uerr
+	}
+	return url.String(), nil
 }
 
 func (f *ForgeConfig) CommitConfig() error {

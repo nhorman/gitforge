@@ -34,3 +34,7 @@ func (f *DummyForge) Clone(opts forge.CloneOpts) error {
 func (f *DummyForge) Fork(opts forge.ForkOpts) error {
 	return nil
 }
+
+func (f *DummyForge) CreatePr(opts forge.CreatePrOpts) error {
+	return nil
+}

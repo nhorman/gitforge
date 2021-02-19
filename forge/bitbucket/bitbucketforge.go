@@ -147,3 +147,41 @@ func (f *BitBucketForge) Fork(opts forge.ForkOpts) error {
 	logging.Forgelog.Printf("Forked from repo %s to repo %s/%s\n", frepo.Parent.Links["html"].(map[string]interface{})["href"].(string), owner, slug)
 	return nil
 }
+
+func (f *BitBucketForge) CreatePr(opts forge.CreatePrOpts) error {
+
+	_, err := f.forge.OpenLocalRepo()
+	if err != nil {
+		return err
+	}
+
+	logging.Forgelog.Printf("Synchronizing branches\n")
+
+	err = f.forge.Push(opts.Remote, opts.Sbranch, opts.Tbranch)
+	if err != nil {
+		return fmt.Errorf("Push Failed: %s\n", err)
+	}
+
+	fcfg, ferr := f.forge.GetForgeConfig()
+	if ferr != nil {
+		return fmt.Errorf("Forge config is busted: %s\n", ferr)
+	}
+
+	c := bitbucket.NewBasicAuth(opts.Common.User, opts.Common.Pass)
+	// Indicate what repo we want
+	_, slug, _, _ := getRepoSlugAndOwner(fcfg.Child.Url)
+
+	propts := &bitbucket.PullRequestsOptions{
+		Owner:             opts.Common.User,
+		RepoSlug:          slug,
+		SourceBranch:      opts.Sbranch,
+		DestinationBranch: opts.Tbranch,
+	}
+
+	_, cerr := c.Repositories.PullRequests.Create(propts)
+	if cerr != nil {
+		return fmt.Errorf("Unable to create Pull Request: %s\n", cerr)
+	}
+
+	return nil
+}
