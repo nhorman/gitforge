@@ -49,8 +49,10 @@ func TestMain(m *testing.M) {
 	}
 
 	ret := m.Run()
-	os.Chdir("../")
-	os.RemoveAll("./.test")
+	os.Chdir(cwd)
+	if ret == 0 {
+		os.RemoveAll("./.test")
+	}
 	os.Exit(ret)
 }
 
