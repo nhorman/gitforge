@@ -51,6 +51,7 @@ func (f *GitHubForge) InitForges() error {
 	if err != nil {
 		return nil
 	}
+	defer config.CommitConfig()
 
 	// We want to register the standard forges for bitbucket org as both
 	// a git@ prefix and an https prefix
@@ -62,7 +63,7 @@ func (f *GitHubForge) InitForges() error {
 		"PASSWORDHERE")
 
 	config.AddForge("github-https",
-		"bitbucket",
+		"github",
 		"https://github.com",
 		"api.github.com",
 		"USERNAMEHERE",

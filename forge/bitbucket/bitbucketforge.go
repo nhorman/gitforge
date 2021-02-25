@@ -59,6 +59,7 @@ func (f *BitBucketForge) InitForges() error {
 	if err != nil {
 		return err
 	}
+	defer config.CommitConfig()
 
 	// We want to register the standard forges for bitbucket org as both
 	// a git@ prefix and an https prefix
@@ -114,7 +115,7 @@ func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
 			return remerr
 		}
 
-		cfg, err := gitconfigset.NewForgeConfigSet()
+		cfg, err := gitconfigset.NewForgeConfigSetInDir(dirname)
 		if err != nil {
 			f.cleanup(dirname)
 			return err

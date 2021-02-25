@@ -75,7 +75,7 @@ func (f *ForgeConfigSet) AddForgeRemoteSection(forgetype string, child string, p
 	sec.NewKey("forgetype", forgetype)
 	sec.NewKey("childremote", child)
 	sec.NewKey("parentremote", parent)
-
+	f.Local.modified = true
 	return nil
 }
 
@@ -132,7 +132,6 @@ func (f *ForgeConfigSet) ConfigFromUrl(url string) (*forge.ForgeConfig, error) {
 		cloneurl := sec.Key("cloneurl").String()
 		if strings.HasPrefix(url, cloneurl) == true {
 			cfg := &forge.ForgeConfig{
-				Name:         sec.Key("name").String(),
 				Type:         sec.Key("forgetype").String(),
 				User:         sec.Key("user").String(),
 				Pass:         sec.Key("pass").String(),
@@ -194,9 +193,8 @@ func NewForgeConfigSet() (*ForgeConfigSet, error) {
 	lpath, err := findTopLevelGitDir(".")
 
 	global := ForgeCfg{false, true, gpath, nil}
-	if err == nil {
-		global.exists = true
-	}
+	global.exists = true
+
 	local := ForgeCfg{false, false, lpath + "/.git/config", nil}
 	if err == nil {
 		local.exists = true
@@ -209,6 +207,28 @@ func NewForgeConfigSet() (*ForgeConfigSet, error) {
 	}
 	return fcs, nil
 
+}
+
+func NewForgeConfigSetInDir(dirname string) (*ForgeConfigSet, error) {
+	cfg, err := NewForgeConfigSet()
+	if err != nil {
+		return nil, err
+	}
+
+	newlocalpath, err2 := filepath.Abs("./" + dirname + "/.git/config")
+	if err2 != nil {
+		return nil, err
+	}
+
+	cfg.Local = ForgeCfg{false, false, newlocalpath, nil}
+	cfg.Local.exists = true
+	ini, err2 := ini.Load(cfg.Local.path)
+	if err2 != nil {
+		cfg.Local.exists = false
+		return nil, err2
+	}
+	cfg.Local.cfg = ini
+	return cfg, nil
 }
 
 func (f *ForgeConfigSet) CommitConfig() error {
