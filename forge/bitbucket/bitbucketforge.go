@@ -109,7 +109,7 @@ func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
 
 		parentCloneUrl := repo.Parent.Links["html"].(map[string]interface{})["href"].(string)
 
-		_, remerr := f.forge.CreateRemote("origin-remote", parentCloneUrl)
+		_, remerr := f.forge.CreateRemote("origin-parent", parentCloneUrl)
 		if remerr != nil {
 			f.cleanup(dirname)
 			return remerr
@@ -122,7 +122,7 @@ func (f *BitBucketForge) Clone(opts forge.CloneOpts) error {
 		}
 		defer cfg.CommitConfig()
 
-		ferr := cfg.AddForgeRemoteSection(f.cfg.Type, "origin", "origin-remote")
+		ferr := cfg.AddForgeRemoteSection(f.cfg.Type, "origin", "origin-parent")
 		if ferr != nil {
 			f.cleanup(dirname)
 			return ferr
