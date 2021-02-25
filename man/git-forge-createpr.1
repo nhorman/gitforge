@@ -1,0 +1,66 @@
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "git-forge-createpr" 1 "Jan 2021" "Linux" "git-forge-createpr"
+.SH NAME
+git-forge-fork \- create a pr from the child repository to the parent
+repository, as specified in the local repo config
+.SH "SYNOPSIS"
+
+.nf
+\fBgit forge createpr [options]\fR
+.fi
+
+.SH "DESCRIPTION"
+
+.PP
+Push the specified source branch to the target branch at the child remote 
+
+.SH "USAGE"
+.TP
+.SS git forge createpr [options]
+
+Using the forge config stored in the local repository, synchronize the source
+branch to the target branch on the child remote, then request that a pull
+request be opened from the child remotes source branch to the parent remotes
+target branch
+
+.TP
+.I Options
+
+.TP
+.B -h 
+Display help text
+
+.TP
+.B --sbranch
+Select the local source branch to use as the content to create a PR with
+
+.TP
+.B --tbranch
+Select the target branch on the parent remote to reuqest a merge to for this PR
+
+.TP
+.B --title
+The title of this PR
+
+.TP
+.B --description
+The brief description of why this PR is being opened
+
+
