@@ -181,14 +181,14 @@ func (f *BitBucketForge) CreatePr(opts forge.CreatePrOpts) error {
 	}
 	defer cfg.CommitConfig()
 
-	childurl, _, ferr := cfg.GetForgeRemoteUrls()
+	fconfig, ferr := cfg.GetForgeRemoteSection()
 	if ferr != nil {
 		return fmt.Errorf("Forge config is busted: %s\n", ferr)
 	}
 
 	c := bitbucket.NewBasicAuth(f.cfg.User, f.cfg.Pass)
 	// Indicate what repo we want
-	_, slug, _, _ := getRepoSlugAndOwner(childurl)
+	_, slug, _, _ := getRepoSlugAndOwner(fconfig.Child.Url)
 
 	propts := &bitbucket.PullRequestsOptions{
 		Owner:             f.cfg.User,

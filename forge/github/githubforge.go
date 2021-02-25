@@ -151,12 +151,12 @@ func (f *GitHubForge) CreatePr(opts forge.CreatePrOpts) error {
 		return err
 	}
 	defer cfg.CommitConfig()
-	child, _, err := cfg.GetForgeRemoteSection()
+	fconfig, err := cfg.GetForgeRemoteSection()
 	if err != nil {
 		return err
 	}
 
-	err = f.forge.Push(child, opts.Sbranch, opts.Tbranch)
+	err = f.forge.Push(fconfig.Child.Name, opts.Sbranch, opts.Tbranch)
 	if err != nil {
 		return err
 	}
