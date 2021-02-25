@@ -7,7 +7,7 @@ import (
 	"git-forge/log"
 )
 
-var delForgeDeps = TestData{[]string{"delforge", "--name", "dummy-ssh"}, []string{"fork", "clone", "addforge", "initconfig"}, false}
+var delForgeDeps = TestData{[]string{"delforge", "--name", "dummy-http"}, []string{"createpr", "fork", "clone", "addforge", "initconfig"}, false}
 
 func init() {
 	RegisterCmd("delforge", DelForgeCmd, &delForgeDeps)

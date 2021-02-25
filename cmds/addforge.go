@@ -7,7 +7,7 @@ import (
 	"git-forge/log"
 )
 
-var addForgeDeps = TestData{[]string{"addforge", "-name", "dummy-http"}, []string{"initconfig"}, false}
+var addForgeDeps = TestData{[]string{"addforge", "-name", "dummy-http", "-type", "dummy", "-cloneurl", "https://dummy.org/", "-apiurl", "https://api.dummy.org", "--user", "NOUSER", "--pass", "NOPASS"}, []string{"initconfig"}, false}
 
 func init() {
 	RegisterCmd("addforge", AddForgeCmd, &addForgeDeps)
