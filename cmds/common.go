@@ -32,6 +32,7 @@ func AllocateForgeFromUrl(url string) (forge.Forge, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer forgeconfig.CommitConfig()
 
 	fconfig, err := forgeconfig.ConfigFromUrl(url)
 
@@ -46,4 +47,21 @@ func AllocateForgeFromUrl(url string) (forge.Forge, error) {
 		return nil, fmt.Errorf("No such forge type: %s\n", fconfig.Type)
 	}
 	return forge, nil
+}
+
+func AllocateForge() (forge.Forge, error) {
+
+	forgeconfig, err := gitconfigset.NewForgeConfigSet()
+	if err != nil {
+		return nil, err
+	}
+	defer forgeconfig.CommitConfig()
+
+	fconfig, err := forgeconfig.GetForgeRemoteSection()
+	if err != nil {
+		return nil, err
+	}
+
+	return AllocateForgeFromUrl(fconfig.Child.Url)
+
 }

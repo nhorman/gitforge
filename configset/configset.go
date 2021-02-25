@@ -14,8 +14,7 @@ type ForgeConfigOps interface {
 	AddForge(name string, forgetype string, cloneUrl string, apiUrl string, user string, pass string) error
 	DelForge(name string) error
 	AddForgeRemoteSection(string, string, string) error
-	GetForgeRemoteSection() (string, string, error)
-	GetForgeRemoteUrls() (string, string, error)
+	GetForgeRemoteSection() (string, string, string, error)
 	GetRemoteUrl(string) (string, error)
 	CommitConfig() error
 }
@@ -80,46 +79,47 @@ func (f *ForgeConfigSet) AddForgeRemoteSection(forgetype string, child string, p
 	return nil
 }
 
-func (f *ForgeConfigSet) GetForgeRemoteSection() (string, string, error) {
+func (f *ForgeConfigSet) GetForgeRemoteSection() (*forge.ForgeLocalConfig, error) {
 	sec, serr := f.Local.cfg.GetSection("forge")
 	if serr != nil {
-		return "", "", serr
+		return nil, serr
 	}
 
 	childremote, cerr := sec.GetKey("childremote")
 	parentremote, perr := sec.GetKey("parentermote")
-	if cerr != nil || perr != nil {
-		return "", "", fmt.Errorf("Unable to get config keys for forge remotes\n")
+	forgetype, terr := sec.GetKey("forgetype")
+	if cerr != nil || perr != nil || terr != nil {
+		return nil, fmt.Errorf("Unable to get config keys for forge remotes\n")
 	}
 
-	return childremote.String(), parentremote.String(), nil
-}
-
-func (f *ForgeConfigSet) GetForgeRemoteUrls() (string, string, error) {
-	child, parent, err := f.GetForgeRemoteSection()
-	if err != nil {
-		return "", "", err
-	}
-
-	childurlsec, err1 := f.Local.cfg.GetSection("remote \"" + child + "\"")
+	childurlsec, err1 := f.Local.cfg.GetSection("remote \"" + childremote.String() + "\"")
 	if err1 != nil {
-		return "", "", err1
+		return nil, err1
 	}
-	parenturlsec, err2 := f.Local.cfg.GetSection("remote \"" + parent + "\"")
+	parenturlsec, err2 := f.Local.cfg.GetSection("remote \"" + parentremote.String() + "\"")
 	if err2 != nil {
-		return "", "", err2
+		return nil, err2
 	}
 
 	childurl, err3 := childurlsec.GetKey("url")
 	parenturl, err4 := parenturlsec.GetKey("url")
-	if err3 != nil {
-		return "", "", err3
-	}
-	if err4 != nil {
-		return "", "", err4
+
+	if err3 != nil || err4 != nil {
+		return nil, fmt.Errorf("Unable to get urls for forge remotes\n")
 	}
 
-	return childurl.String(), parenturl.String(), nil
+	ret := &forge.ForgeLocalConfig{
+		Type: forgetype.String(),
+		Child: forge.ForgeRemoteInfo{
+			Name: childremote.String(),
+			Url:  childurl.String(),
+		},
+		Parent: forge.ForgeRemoteInfo{
+			Name: parentremote.String(),
+			Url:  parenturl.String(),
+		},
+	}
+	return ret, nil
 }
 
 func (f *ForgeConfigSet) ConfigFromUrl(url string) (*forge.ForgeConfig, error) {

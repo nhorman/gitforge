@@ -35,6 +35,17 @@ type ForgeConfig struct {
 	ApiBaseUrl   string
 }
 
+type ForgeRemoteInfo struct {
+	Name string
+	Url  string
+}
+
+type ForgeLocalConfig struct {
+	Type   string
+	Child  ForgeRemoteInfo
+	Parent ForgeRemoteInfo
+}
+
 type Forge interface {
 	InitForges() error
 	Clone(opts CloneOpts) error
