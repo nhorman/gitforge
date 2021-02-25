@@ -19,7 +19,6 @@ type ForkOpts struct {
 }
 
 type CreatePrOpts struct {
-	Remote      string
 	Sbranch     string
 	Tbranch     string
 	Title       string
@@ -106,13 +105,28 @@ func (f *ForgeObj) OpenLocalRepo() (*git.Repository, error) {
 }
 
 func (f *ForgeObj) Push(remote string, sbranch string, tbranch string) error {
-	refspec := sbranch + ":" + tbranch
+	refspec := "refs/heads/" + sbranch + ":refs/heads/" + sbranch
 
-	return f.Lrepo.Push(&git.PushOptions{
+	options := &git.PushOptions{
 		RemoteName: remote,
 		RefSpecs:   []config.RefSpec{config.RefSpec(refspec)},
 		Prune:      false,
-	})
+	}
+
+	verr := options.Validate()
+	if verr != nil {
+		return verr
+	}
+
+	ret := f.Lrepo.Push(options)
+
+	if ret != nil {
+		// Mask already up to date errors
+		if ret == git.NoErrAlreadyUpToDate {
+			ret = nil
+		}
+	}
+	return ret
 }
 
 func (f *ForgeObj) CreateRemote(name string, url string) (*git.Remote, error) {

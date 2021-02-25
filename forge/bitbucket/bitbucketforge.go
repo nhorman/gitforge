@@ -7,8 +7,6 @@ import (
 	"git-forge/forge"
 	"git-forge/log"
 	"github.com/ktrysmt/go-bitbucket"
-	//"gopkg.in/src-d/go-git.v4"
-	//"gopkg.in/src-d/go-git.v4/config"
 	"os"
 	"path"
 	"path/filepath"
@@ -169,13 +167,6 @@ func (f *BitBucketForge) CreatePr(opts forge.CreatePrOpts) error {
 		return err
 	}
 
-	logging.Forgelog.Printf("Synchronizing branches\n")
-
-	err = f.forge.Push(opts.Remote, opts.Sbranch, opts.Tbranch)
-	if err != nil {
-		return fmt.Errorf("Push Failed: %s\n", err)
-	}
-
 	cfg, err := gitconfigset.NewForgeConfigSet()
 	if err != nil {
 		return err
@@ -187,15 +178,25 @@ func (f *BitBucketForge) CreatePr(opts forge.CreatePrOpts) error {
 		return fmt.Errorf("Forge config is busted: %s\n", ferr)
 	}
 
+	logging.Forgelog.Printf("Synchronizing branches\n")
+
+	err = f.forge.Push(fconfig.Child.Name, opts.Sbranch, opts.Tbranch)
+	if err != nil {
+		return fmt.Errorf("Push Failed: %s\n", err)
+	}
+
 	c := bitbucket.NewBasicAuth(f.cfg.User, f.cfg.Pass)
 	// Indicate what repo we want
-	_, slug, _, _ := getRepoSlugAndOwner(fconfig.Child.Url)
+	_, slug, owner, _ := getRepoSlugAndOwner(fconfig.Parent.Url)
 
 	propts := &bitbucket.PullRequestsOptions{
-		Owner:             f.cfg.User,
+		Owner:             owner,
 		RepoSlug:          slug,
+		SourceRepository:  f.cfg.User + "/" + slug,
 		SourceBranch:      opts.Sbranch,
 		DestinationBranch: opts.Tbranch,
+		Title:             opts.Title,
+		Description:       opts.Description,
 	}
 
 	_, cerr := c.Repositories.PullRequests.Create(propts)
