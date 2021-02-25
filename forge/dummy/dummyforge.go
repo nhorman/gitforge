@@ -31,7 +31,7 @@ func (f *DummyForge) InitForges() error {
 	// a git@ prefix and an https prefix
 	err := config.AddForge("dummy-ssh",
 		"dummy",
-		"git@dummy.org",
+		"file:///",
 		"api.dummy.org/2.0",
 		"UNUSEDUSER",
 		"UNUSEDPAS")

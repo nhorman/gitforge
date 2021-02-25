@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-var cloneDeps = TestData{[]string{"clone", "-getparent", "git@dummy.org:childtestuser/testrepo.git"}, []string{"fork"}, false}
+var cloneDeps = TestData{[]string{"clone", "-getparent", "file:///testuser/testrepo.git"}, []string{"fork"}, false}
 
 func init() {
 	RegisterCmd("clone", CloneForgeCmd, &cloneDeps)
