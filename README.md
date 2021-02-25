@@ -31,6 +31,15 @@ copy git-forge to /usr/local/bin  the git porcelain command:
 `git forge`
 should then be available
 
-Note there is also a man page that can be installed
+Note there is also a man page suite that can be installed
+
+
+## TODO
+If anyone wants to help out, I'd love some aid in:
+* Writing forge drivers (see code in the forge/* dirs)
+* Writing tests
+* Implementing useful forge commands
+* Packaging for various distributions
+
 
 
