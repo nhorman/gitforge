@@ -86,10 +86,18 @@ func (f *ForgeConfigSet) GetForgeRemoteSection() (*forge.ForgeLocalConfig, error
 	}
 
 	childremote, cerr := sec.GetKey("childremote")
-	parentremote, perr := sec.GetKey("parentermote")
+	parentremote, perr := sec.GetKey("parentremote")
 	forgetype, terr := sec.GetKey("forgetype")
-	if cerr != nil || perr != nil || terr != nil {
-		return nil, fmt.Errorf("Unable to get config keys for forge remotes\n")
+	if cerr != nil {
+		return nil, fmt.Errorf("Unable to get config keys for child forge remotes: %s\n", cerr)
+	}
+
+	if perr != nil {
+		return nil, fmt.Errorf("Unable to get config keys for parent forge remotes: %s\n", perr)
+	}
+
+	if terr != nil {
+		return nil, fmt.Errorf("Unable to get config keys for forge type: %s\n", terr)
 	}
 
 	childurlsec, err1 := f.Local.cfg.GetSection("remote \"" + childremote.String() + "\"")
@@ -192,7 +200,7 @@ func NewForgeConfigSet() (*ForgeConfigSet, error) {
 
 	lpath, err := findTopLevelGitDir(".")
 
-	global := ForgeCfg{false, true, gpath, nil}
+	global := ForgeCfg{false, false, gpath, nil}
 	global.exists = true
 
 	local := ForgeCfg{false, false, lpath + "/.git/config", nil}
