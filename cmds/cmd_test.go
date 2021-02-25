@@ -14,8 +14,9 @@ import (
 // the addforge command
 func TestMain(m *testing.M) {
 
-	os.Remove("./.gitconfig")
-	f, serr := os.OpenFile("./.gitconfig", os.O_CREATE, 0666)
+	os.RemoveAll(".test")
+	os.Mkdir(".test", 0755)
+	f, serr := os.OpenFile("./.test/.gitconfig", os.O_CREATE, 0666)
 	if serr != nil {
 		fmt.Printf("Unable to setup test: %s\n", serr)
 		os.Exit(1)
@@ -28,7 +29,8 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	os.Setenv("HOME", cwd)
+	os.Setenv("HOME", cwd+"/.test")
+	os.Chdir(".test")
 
 	// hand register the dummy forge driver
 	rerr := RegisterForgeType("dummy", dummyforge.NewDummyForge)
@@ -47,7 +49,8 @@ func TestMain(m *testing.M) {
 	}
 
 	ret := m.Run()
-	os.Remove("./.gitconfig")
+	os.Chdir("../")
+	os.RemoveAll("./.test")
 	os.Exit(ret)
 }
 
