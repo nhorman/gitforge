@@ -87,3 +87,11 @@ func (f *DummyForge) Fork(opts forge.ForkOpts) error {
 func (f *DummyForge) CreatePr(opts forge.CreatePrOpts) error {
 	return nil
 }
+
+func (f *DummyForge) GetAllPrTitles() ([]forge.PrTitle, error) {
+	return nil, nil
+}
+
+func (f *DummyForge) GetPr(idstring string) (*forge.PR, error) {
+	return nil, nil
+}

@@ -1,12 +1,22 @@
 package forge
 
 import (
+	"fmt"
+	"git-forge/log"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/config"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport/http"
 	"os"
-
-	"git-forge/log"
 )
+
+type ForgeConfig struct {
+	Name         string
+	Type         string
+	User         string
+	Pass         string
+	CloneBaseUrl string
+	ApiBaseUrl   string
+}
 
 type CloneOpts struct {
 	Parentfork bool
@@ -23,15 +33,6 @@ type CreatePrOpts struct {
 	Tbranch     string
 	Title       string
 	Description string
-}
-
-type ForgeConfig struct {
-	Name         string
-	Type         string
-	User         string
-	Pass         string
-	CloneBaseUrl string
-	ApiBaseUrl   string
 }
 
 type ForgeRemoteInfo struct {
@@ -57,8 +58,7 @@ type LocalRepoOps interface {
 	OpenLocalRepo() (*git.Repository, error)
 	Push(remote string, sbranch string, tbranch string) error
 	CreateRemote(name string, url string) (*git.Remote, error)
-	CreateForgeConfig() error
-	GetForgeConfig() (ForgeConfig, error)
+	Fetch(location string, refspec string) error
 }
 
 type ForgeObj struct {
@@ -142,4 +142,37 @@ func (f *ForgeObj) CreateRemote(name string, url string) (*git.Remote, error) {
 		return nil, remerr
 	}
 	return lremote, nil
+}
+
+func (f *ForgeObj) Fetch(location string, refspec string, user string, pass string) error {
+
+	copts := &config.RemoteConfig{
+		Name: "_tmpfetchremote",
+		URLs: []string{location},
+	}
+
+	remote, cerr := f.Lrepo.CreateRemote(copts)
+	if cerr != nil {
+		return fmt.Errorf("Unable to create rmote: %s", cerr)
+	}
+	defer f.Lrepo.DeleteRemote("_tmpfetchremote")
+
+	fopts := &git.FetchOptions{
+		RemoteName: location,
+		RefSpecs:   []config.RefSpec{config.RefSpec(refspec)},
+		Force:      true,
+		Auth:       &http.BasicAuth{user, pass},
+	}
+
+	err := fopts.Validate()
+	if err != nil {
+		return fmt.Errorf("Unable to fetch: %s", err)
+	}
+	ret := remote.Fetch(fopts)
+	if ret != nil {
+		if ret == git.NoErrAlreadyUpToDate {
+			return nil
+		}
+	}
+	return ret
 }
