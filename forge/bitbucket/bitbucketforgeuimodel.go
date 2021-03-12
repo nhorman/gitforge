@@ -5,8 +5,6 @@ import (
 	"git-forge/configset"
 	"git-forge/forge"
 	"github.com/ktrysmt/go-bitbucket"
-	"io/ioutil"
-	"net/http"
 )
 
 func (f *BitBucketForge) GetAllPrTitles() ([]forge.PrTitle, error) {
@@ -64,17 +62,7 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 
 	_, slug, owner, _ := getRepoSlugAndOwner(fconfig.Parent.Url)
 
-	req, err := http.NewRequest("GET", "https://"+f.cfg.ApiBaseUrl+"/repositories/"+owner+"/"+slug+"/pullrequests/"+idstring, nil)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to fetch PR json: %s", err)
-	}
-	req.SetBasicAuth(f.cfg.User, f.cfg.Pass)
-	resp, err := http.DefaultClient.Do(req)
-	defer resp.Body.Close()
-
-	body, _ := ioutil.ReadAll(resp.Body)
-
-	pullrequest, err := PrJsonToStruct(body)
+	pullrequest, err := GetPrFromBitBucket(f.cfg.ApiBaseUrl, owner, slug, f.cfg.User, f.cfg.Pass, idstring)
 	if err != nil {
 		return nil, err
 	}
@@ -95,20 +83,7 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 		Discussions: make([]forge.Discussion, 0),
 	}
 
-	creq, cerr := http.NewRequest("GET", "https://"+f.cfg.ApiBaseUrl+"/repositories/"+owner+"/"+slug+"/pullrequests/"+idstring+"/comments", nil)
-	if cerr != nil {
-		return nil, fmt.Errorf("Unable to fetch PR json: %s", cerr)
-	}
-	creq.SetBasicAuth(f.cfg.User, f.cfg.Pass)
-	cresp, crerr := http.DefaultClient.Do(creq)
-	if crerr != nil {
-		return nil, crerr
-	}
-	defer cresp.Body.Close()
-
-	cbody, _ := ioutil.ReadAll(cresp.Body)
-
-	comments, commenterr := PrCommentsJsonToStruct(cbody)
+	comments, commenterr := GetPrCommentsFromBitBucket(f.cfg.ApiBaseUrl, owner, slug, f.cfg.User, f.cfg.Pass, idstring)
 	if commenterr != nil {
 		return nil, commenterr
 	}

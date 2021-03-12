@@ -2,6 +2,9 @@ package bitbucketforge
 
 import (
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"time"
 )
 
@@ -110,11 +113,22 @@ type PullRequest struct {
 	ClosedBy    interface{} `json:"closed_by"`
 }
 
-func PrJsonToStruct(input []byte) (PullRequest, error) {
+func GetPrFromBitBucket(baseUrl string, owner string, slug string, user string, pass string, idstring string) (*PullRequest, error) {
+
+	req, err := http.NewRequest("GET", "https://"+baseUrl+"/repositories/"+owner+"/"+slug+"/pullrequests/"+idstring, nil)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to fetch PR json: %s", err)
+	}
+	req.SetBasicAuth(user, pass)
+	resp, err := http.DefaultClient.Do(req)
+	defer resp.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp.Body)
+
 	var output PullRequest
 
-	err := json.Unmarshal(input, &output)
-	return output, err
+	err = json.Unmarshal(body, &output)
+	return &output, err
 }
 
 type CommentValue struct {
@@ -180,9 +194,112 @@ type PRComments struct {
 	Size    int            `json:"size"`
 }
 
-func PrCommentsJsonToStruct(input []byte) (PRComments, error) {
-	var output PRComments
+func GetPrCommentsFromBitBucket(baseurl string, owner string, slug string, user string, pass string, idstring string) (*PRComments, error) {
+	creq, cerr := http.NewRequest("GET", "https://"+baseurl+"/repositories/"+owner+"/"+slug+"/pullrequests/"+idstring+"/comments", nil)
+	if cerr != nil {
+		return nil, fmt.Errorf("Unable to fetch PR json: %s", cerr)
+	}
+	creq.SetBasicAuth(user, pass)
+	cresp, crerr := http.DefaultClient.Do(creq)
+	if crerr != nil {
+		return nil, crerr
+	}
+	defer cresp.Body.Close()
 
-	err := json.Unmarshal(input, &output)
-	return output, err
+	cbody, _ := ioutil.ReadAll(cresp.Body)
+
+	var output PRComments
+	err := json.Unmarshal(cbody, &output)
+	return &output, err
+}
+
+type PRCommits struct {
+	Pagelen int `json:"pagelen"`
+	Values  []struct {
+		Hash       string `json:"hash"`
+		Repository struct {
+			Links struct {
+				Self struct {
+					Href string `json:"href"`
+				} `json:"self"`
+				HTML struct {
+					Href string `json:"href"`
+				} `json:"html"`
+				Avatar struct {
+					Href string `json:"href"`
+				} `json:"avatar"`
+			} `json:"links"`
+			Type     string `json:"type"`
+			Name     string `json:"name"`
+			FullName string `json:"full_name"`
+			UUID     string `json:"uuid"`
+		} `json:"repository"`
+		CLinks struct {
+			Self     LinkTuple `json:"self"`
+			Comments LinkTuple `json:"comments"`
+			Patch    LinkTuple `json:"patch"`
+			HTML     LinkTuple `json:"html"`
+			Diff     LinkTuple `json:"diff"`
+			Approve  LinkTuple `json:"approve"`
+			Statuses LinkTuple `json:"statuses"`
+		} `json:"links,omitempty"`
+		Author struct {
+			Raw  string `json:"raw"`
+			Type string `json:"type"`
+			User struct {
+				DisplayName string `json:"display_name"`
+				UUID        string `json:"uuid"`
+				Links       struct {
+					Self   LinkTuple `json:"self"`
+					HTML   LinkTuple `json:"html"`
+					Avatar LinkTuple `json:"avatar"`
+				} `json:"links"`
+				Nickname  string `json:"nickname"`
+				Type      string `json:"type"`
+				AccountID string `json:"account_id"`
+			} `json:"user"`
+		} `json:"author"`
+		Summary LinkTuple `json:"summary"`
+		Parents []struct {
+			Hash  string `json:"hash"`
+			Type  string `json:"type"`
+			Links struct {
+				Self LinkTuple `json:"self"`
+				HTML LinkTuple `json:"html"`
+			} `json:"links"`
+		} `json:"parents"`
+		Date    time.Time `json:"date"`
+		Message string    `json:"message"`
+		Type    string    `json:"type"`
+		Links   struct {
+			Self     LinkTuple `json:"self"`
+			Comments LinkTuple `json:"comments"`
+			HTML     LinkTuple `json:"html"`
+			Diff     LinkTuple `json:"diff"`
+			Approve  LinkTuple `json:"approve"`
+			Statuses LinkTuple `json:"statuses"`
+		} `json:"links,omitempty"`
+	} `json:"values"`
+	Page int `json:"page"`
+}
+
+func GetPrCommitsFromBitBucket(baseurl string, owner string, slug string, user string, pass string, idstring string) (*PRCommits, error) {
+
+	creq, cerr := http.NewRequest("GET", "https://"+baseurl+"/repositories/"+owner+"/"+slug+"/pullrequests/"+idstring+"/commits", nil)
+	if cerr != nil {
+		return nil, fmt.Errorf("Unable to fetch PR json: %s", cerr)
+	}
+	creq.SetBasicAuth(user, pass)
+	cresp, crerr := http.DefaultClient.Do(creq)
+	if crerr != nil {
+		return nil, crerr
+	}
+	defer cresp.Body.Close()
+
+	cbody, _ := ioutil.ReadAll(cresp.Body)
+
+	var output PRCommits
+
+	err := json.Unmarshal(cbody, &output)
+	return &output, err
 }
