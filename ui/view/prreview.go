@@ -2,7 +2,7 @@ package forgeuiview
 
 import (
 	"git-forge/forge"
-	//"git-forge/ui/model"
+	"git-forge/ui/model"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"strconv"
@@ -96,14 +96,21 @@ func (m *PRReviewPage) populateDiscussions() {
 	m.discussions.SetTopLevel(1)
 	m.discussions.SetSelectedFunc(func(node *tview.TreeNode) {
 		data := node.GetReference().(*DiscussionId)
-		data.m.display.SetText(data.c.Content)
+		if data.c.Type == forge.GENERAL {
+			data.m.display.SetRegions(false)
+			data.m.display.SetText(data.c.Content)
+		} else if data.c.Type == forge.INLINE {
+			data.m.display.SetRegions(true)
+			model, _ := forgemodel.GetUiModel(nil)
+			content, _ := model.GetPrInlineContent(data.m.pr, &data.c)
+			data.m.display.SetText(content)
+			data.m.display.Highlight("comment")
+			data.m.display.ScrollToHighlight()
+		}
 		return
 	})
 	nodemap[0] = troot
 	for _, c := range m.pr.Discussions {
-		if c.Type == forge.INLINE {
-			continue
-		}
 		parent, ok = nodemap[c.ParentId]
 		if ok == false {
 			return

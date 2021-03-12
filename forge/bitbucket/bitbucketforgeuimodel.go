@@ -126,6 +126,8 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 			newcomment.Type = forge.GENERAL
 		} else {
 			newcomment.Type = forge.INLINE
+			newcomment.Inline.Path = c.Inline.Path
+			newcomment.Inline.Offset = c.Inline.To
 		}
 		newcomment.Content = c.Content.Raw
 		retpr.Discussions = append(retpr.Discussions, newcomment)

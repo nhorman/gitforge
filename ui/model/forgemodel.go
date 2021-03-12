@@ -21,6 +21,7 @@ type ForgeUiOpts interface {
 	PrIsWatched(idstring string) (bool, error)
 	GetWatchedPrs() ([]string, []string, error)
 	GetLocalPr(idstring string) (*forge.PR, error)
+	GetPrInlineContent(*forge.PR, *forge.Discussion) (string, error)
 }
 
 func NewUiModel(forge forge.ForgeUIModel) (*ForgeUiModel, error) {
@@ -145,4 +146,21 @@ func (f *ForgeUiModel) GetLocalPr(idstring string) (*forge.PR, error) {
 		return nil, err2
 	}
 	return &pr, nil
+}
+
+func (f *ForgeUiModel) GetPrInlineContent(pr *forge.PR, d *forge.Discussion) (string, error) {
+	cmd := exec.Command("git", "show", "refs/prs/"+strconv.FormatInt(pr.PrId, 10)+":"+d.Inline.Path)
+	content, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	var newcontent []string = make([]string, 0)
+	contentlines := strings.Split(string(content), "\n")
+	newcontent = append(newcontent, contentlines[0:d.Inline.Offset-1]...)
+	newcontent = append(newcontent, contentlines[d.Inline.Offset]+"[\"comment\"]")
+	newcontent = append(newcontent, d.Content+"[\"\"]")
+	newcontent = append(newcontent, contentlines[d.Inline.Offset+1:]...)
+
+	ret := strings.Join(newcontent, "\n")
+	return ret, nil
 }

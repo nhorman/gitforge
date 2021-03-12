@@ -28,12 +28,18 @@ const (
 	INLINE  DiscussionType = iota
 )
 
+type InlineCommentData struct {
+	Path   string `json:"path"`
+	Offset int    `json:"offset"`
+}
+
 type Discussion struct {
-	Id       int            `json:"id"`
-	ParentId int            `json:"parentid"`
-	Type     DiscussionType `json:"type"`
-	Author   string         `json:"author"`
-	Content  string         `json::"content"`
+	Id       int               `json:"id"`
+	ParentId int               `json:"parentid"`
+	Type     DiscussionType    `json:"type"`
+	Inline   InlineCommentData `json:"inlinedata"`
+	Author   string            `json:"author"`
+	Content  string            `json::"content"`
 }
 
 type PR struct {
