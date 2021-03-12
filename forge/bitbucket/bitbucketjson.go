@@ -49,15 +49,9 @@ type PullRequest struct {
 		} `json:"commit"`
 		Repository struct {
 			Links struct {
-				Self struct {
-					Href string `json:"href"`
-				} `json:"self"`
-				HTML struct {
-					Href string `json:"href"`
-				} `json:"html"`
-				Avatar struct {
-					Href string `json:"href"`
-				} `json:"avatar"`
+				Self   LinkTuple `json:"self"`
+				HTML   LinkTuple `json:"html"`
+				Avatar LinkTuple `json:"avatar"`
 			} `json:"links"`
 			Type     string `json:"type"`
 			Name     string `json:"name"`
@@ -69,36 +63,21 @@ type PullRequest struct {
 		} `json:"branch"`
 	} `json:"destination"`
 	CreatedOn time.Time `json:"created_on"`
-	Summary   struct {
-		Raw    string `json:"raw"`
-		Markup string `json:"markup"`
-		HTML   string `json:"html"`
-		Type   string `json:"type"`
-	} `json:"summary"`
-	Source struct {
+	Summary   LinkTuple `json:"summary"`
+	Source    struct {
 		Commit struct {
 			Hash  string `json:"hash"`
 			Type  string `json:"type"`
 			Links struct {
-				Self struct {
-					Href string `json:"href"`
-				} `json:"self"`
-				HTML struct {
-					Href string `json:"href"`
-				} `json:"html"`
+				Self LinkTuple `json:"self"`
+				HTML LinkTuple `json:"html"`
 			} `json:"links"`
 		} `json:"commit"`
 		Repository struct {
 			Links struct {
-				Self struct {
-					Href string `json:"href"`
-				} `json:"self"`
-				HTML struct {
-					Href string `json:"href"`
-				} `json:"html"`
-				Avatar struct {
-					Href string `json:"href"`
-				} `json:"avatar"`
+				Self   LinkTuple `json:"self"`
+				HTML   LinkTuple `json:"html"`
+				Avatar LinkTuple `json:"avatar"`
 			} `json:"links"`
 			Type     string `json:"type"`
 			Name     string `json:"name"`
@@ -119,15 +98,9 @@ type PullRequest struct {
 		DisplayName string `json:"display_name"`
 		UUID        string `json:"uuid"`
 		Links       struct {
-			Self struct {
-				Href string `json:"href"`
-			} `json:"self"`
-			HTML struct {
-				Href string `json:"href"`
-			} `json:"html"`
-			Avatar struct {
-				Href string `json:"href"`
-			} `json:"avatar"`
+			Self   LinkTuple `json:"self"`
+			HTML   LinkTuple `json:"html"`
+			Avatar LinkTuple `json:"avatar"`
 		} `json:"links"`
 		Nickname  string `json:"nickname"`
 		Type      string `json:"type"`
