@@ -19,6 +19,7 @@ type WindowPage interface {
 	GetWindowPrimitive() tview.Primitive
 	HandleInput(event *tcell.EventKey) *tcell.EventKey
 	PagePreDisplay()
+	PageDisplay()
 	PagePostDisplay()
 	SetPageInfo(interface{})
 }
@@ -38,7 +39,7 @@ func inputEventHandler(event *tcell.EventKey) *tcell.EventKey {
 			tlcontrols.Quit()
 			return nil
 		default:
-			return pageret
+			return event
 		}
 	}
 	return nil
@@ -48,6 +49,7 @@ func SwitchPage(newpage string, oldpage string) error {
 	newpagewindow := pageregistry[newpage]
 	newpagewindow.PagePreDisplay()
 	mainwindowpages.SwitchToPage(newpage)
+	newpagewindow.PageDisplay()
 	if oldpage != "" {
 		oldpagewindow := pageregistry[oldpage]
 		oldpagewindow.PagePostDisplay()
@@ -111,7 +113,7 @@ func DisplayTopLevelWindow(a *tview.Application, c TopLevelControls) error {
 	helppage := NewHelpPage()
 	RegisterPage("help", helppage, true, false)
 
-	prlistpage := NewPRListPage()
+	prlistpage := NewPRListPage(a)
 	RegisterPage("prlist", prlistpage, true, false)
 
 	errorpage := NewErrorPage()

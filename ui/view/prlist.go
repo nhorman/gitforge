@@ -9,12 +9,13 @@ import (
 )
 
 type PRListPage struct {
+	app      *tview.Application
 	topflex  *tview.Flex
 	listview *tview.List
 	name     string
 }
 
-func NewPRListPage() WindowPage {
+func NewPRListPage(a *tview.Application) WindowPage {
 	topflexitem := tview.NewFlex().SetDirection(tview.FlexRow)
 
 	topflexitem.AddItem(tview.NewFlex(), 0, 1, false)
@@ -34,6 +35,7 @@ func NewPRListPage() WindowPage {
 	listView.Box.SetTitle("PR List")
 	listView.ShowSecondaryText(false)
 	return &PRListPage{
+		app:      a,
 		topflex:  topflexitem,
 		listview: listView,
 		name:     "",
@@ -86,6 +88,8 @@ func (m *PRListPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			PopUpError(werr)
 		}
 		return nil
+	default:
+		return event
 	}
 
 	return event
@@ -111,6 +115,7 @@ func (m *PRListPage) PagePreDisplay() {
 }
 
 func (m *PRListPage) PageDisplay() {
+	m.app.SetFocus(m.listview)
 	return
 }
 

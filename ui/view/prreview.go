@@ -130,6 +130,7 @@ func (m *PRReviewPage) populateDiscussions() {
 
 func (m *PRReviewPage) PagePreDisplay() {
 	m.display.Box.SetTitle("Discussions for PR " + strconv.FormatInt(m.pr.PrId, 10) + ": " + m.pr.Title)
+	m.display.Clear()
 	focusidx = 0
 	m.app.SetFocus(focusList[focusidx])
 	m.populateDiscussions()
