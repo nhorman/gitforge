@@ -42,11 +42,16 @@ type Discussion struct {
 	Content  string            `json::"content"`
 }
 
+type Commit struct {
+	Hash string `json:"hash"`
+}
+
 type PR struct {
 	PrId        int64        `json:"prid"`
 	Title       string       `json:"title"`
 	PullSpec    PrSpec       `json:"prspec"`
 	Discussions []Discussion `json:"discussions"`
+	Commits     []Commit     `json:"commits"`
 }
 
 type ForgeUIModel interface {

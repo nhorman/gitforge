@@ -108,5 +108,19 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 		retpr.Discussions = append(retpr.Discussions, newcomment)
 	}
 
+	commits, commiterr := GetPrCommitsFromBitBucket(f.cfg.ApiBaseUrl, owner, slug, f.cfg.User, f.cfg.Pass, idstring)
+	if commiterr != nil {
+		return nil, commiterr
+	}
+
+	retpr.Commits = make([]forge.Commit, 0)
+
+	for i := 0; i < len(commits.Values); i++ {
+		c := commits.Values[i]
+		newcommit := forge.Commit{}
+		newcommit.Hash = c.Hash
+		retpr.Commits = append(retpr.Commits, newcommit)
+	}
+
 	return &retpr, nil
 }
