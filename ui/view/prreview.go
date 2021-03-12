@@ -46,7 +46,7 @@ func NewPRReviewPage(a *tview.Application) WindowPage {
 	toprow.AddItem(PRPage.commits, 0, 1, true)
 	bottomrow.AddItem(PRPage.display, 0, 1, true)
 	PRPage.app = a
-	focusList = []tview.Primitive{PRPage.discussions, PRPage.commits}
+	focusList = []tview.Primitive{PRPage.discussions, PRPage.commits, PRPage.display}
 
 	return &PRPage
 }
