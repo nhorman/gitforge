@@ -42,8 +42,16 @@ type Discussion struct {
 	Content  string            `json::"content"`
 }
 
+type CommitCommentData struct {
+	Author  string `json:"author"`
+	Content string `json:"content"`
+	Path    string `json:"path"`
+	Offset  int    `json:"offset"`
+}
+
 type Commit struct {
-	Hash string `json:"hash"`
+	Hash     string              `json:"hash"`
+	Comments []CommitCommentData `json:"comments"`
 }
 
 type PR struct {

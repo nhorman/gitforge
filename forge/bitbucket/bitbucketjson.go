@@ -13,7 +13,7 @@ type LinkTuple struct {
 	Markup string `json:"markup,omitempty"`
 	HTML   string `json:"html,omitempty"`
 	Href   string `json:"href,omitempty"`
-	Type   string `json:"omitempty"`
+	Type   string `json:"type,omitempty"`
 }
 
 type PullRequest struct {
@@ -219,22 +219,16 @@ type PRCommits struct {
 		Hash       string `json:"hash"`
 		Repository struct {
 			Links struct {
-				Self struct {
-					Href string `json:"href"`
-				} `json:"self"`
-				HTML struct {
-					Href string `json:"href"`
-				} `json:"html"`
-				Avatar struct {
-					Href string `json:"href"`
-				} `json:"avatar"`
+				Self   LinkTuple `json:"self"`
+				HTML   LinkTuple `json:"html"`
+				Avatar LinkTuple `json:"avatar"`
 			} `json:"links"`
 			Type     string `json:"type"`
 			Name     string `json:"name"`
 			FullName string `json:"full_name"`
 			UUID     string `json:"uuid"`
 		} `json:"repository"`
-		CLinks struct {
+		Links struct {
 			Self     LinkTuple `json:"self"`
 			Comments LinkTuple `json:"comments"`
 			Patch    LinkTuple `json:"patch"`
@@ -242,7 +236,7 @@ type PRCommits struct {
 			Diff     LinkTuple `json:"diff"`
 			Approve  LinkTuple `json:"approve"`
 			Statuses LinkTuple `json:"statuses"`
-		} `json:"links,omitempty"`
+		} `json:"links"`
 		Author struct {
 			Raw  string `json:"raw"`
 			Type string `json:"type"`
@@ -271,14 +265,6 @@ type PRCommits struct {
 		Date    time.Time `json:"date"`
 		Message string    `json:"message"`
 		Type    string    `json:"type"`
-		Links   struct {
-			Self     LinkTuple `json:"self"`
-			Comments LinkTuple `json:"comments"`
-			HTML     LinkTuple `json:"html"`
-			Diff     LinkTuple `json:"diff"`
-			Approve  LinkTuple `json:"approve"`
-			Statuses LinkTuple `json:"statuses"`
-		} `json:"links,omitempty"`
 	} `json:"values"`
 	Page int `json:"page"`
 }
@@ -299,6 +285,92 @@ func GetPrCommitsFromBitBucket(baseurl string, owner string, slug string, user s
 	cbody, _ := ioutil.ReadAll(cresp.Body)
 
 	var output PRCommits
+
+	err := json.Unmarshal(cbody, &output)
+	return &output, err
+}
+
+type PrCommitComments struct {
+	Pagelen int `json:"pagelen"`
+	Values  []struct {
+		Links struct {
+			Self struct {
+				Href string `json:"href"`
+			} `json:"self"`
+			Code struct {
+				Href string `json:"href"`
+			} `json:"code"`
+			HTML struct {
+				Href string `json:"href"`
+			} `json:"html"`
+		} `json:"links"`
+		Deleted bool `json:"deleted"`
+		Commit  struct {
+			Hash  string `json:"hash"`
+			Type  string `json:"type"`
+			Links struct {
+				Self struct {
+					Href string `json:"href"`
+				} `json:"self"`
+				HTML struct {
+					Href string `json:"href"`
+				} `json:"html"`
+			} `json:"links"`
+		} `json:"commit"`
+		Content struct {
+			Raw    string `json:"raw"`
+			Markup string `json:"markup"`
+			HTML   string `json:"html"`
+			Type   string `json:"type"`
+		} `json:"content"`
+		CreatedOn time.Time `json:"created_on"`
+		User      struct {
+			DisplayName string `json:"display_name"`
+			UUID        string `json:"uuid"`
+			Links       struct {
+				Self struct {
+					Href string `json:"href"`
+				} `json:"self"`
+				HTML struct {
+					Href string `json:"href"`
+				} `json:"html"`
+				Avatar struct {
+					Href string `json:"href"`
+				} `json:"avatar"`
+			} `json:"links"`
+			Nickname  string `json:"nickname"`
+			Type      string `json:"type"`
+			AccountID string `json:"account_id"`
+		} `json:"user"`
+		Inline struct {
+			To   int         `json:"to"`
+			From interface{} `json:"from"`
+			Path string      `json:"path"`
+		} `json:"inline"`
+		UpdatedOn time.Time `json:"updated_on"`
+		Type      string    `json:"type"`
+		ID        int       `json:"id"`
+	} `json:"values"`
+	Page int `json:"page"`
+	Size int `json:"size"`
+}
+
+func GetPrCommitCommentsFromBitBucket(url string, user string, pass string) (*PrCommitComments, error) {
+
+	creq, cerr := http.NewRequest("GET", url, nil)
+	if cerr != nil {
+		return nil, fmt.Errorf("Unable to fetch PR Commit Comments json: %s", cerr)
+	}
+	creq.SetBasicAuth(user, pass)
+	cresp, crerr := http.DefaultClient.Do(creq)
+	if crerr != nil {
+		return nil, crerr
+	}
+	defer cresp.Body.Close()
+
+	cbody, _ := ioutil.ReadAll(cresp.Body)
+
+	var output PrCommitComments
 
 	err := json.Unmarshal(cbody, &output)
 	return &output, err
