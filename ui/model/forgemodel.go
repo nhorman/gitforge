@@ -22,6 +22,7 @@ type ForgeUiOpts interface {
 	GetWatchedPrs() ([]string, []string, error)
 	GetLocalPr(idstring string) (*forge.PR, error)
 	GetPrInlineContent(*forge.PR, *forge.Discussion) (string, error)
+	RefreshPr(*forge.PR, func(*forge.PR, forge.UpdateResult)) error
 }
 
 func NewUiModel(forge forge.ForgeUIModel) (*ForgeUiModel, error) {
@@ -163,4 +164,18 @@ func (f *ForgeUiModel) GetPrInlineContent(pr *forge.PR, d *forge.Discussion) (st
 
 	ret := strings.Join(newcontent, "\n")
 	return ret, nil
+}
+
+func (f *ForgeUiModel) RefreshPr(pr *forge.PR, complete func(pr *forge.PR, result *forge.UpdatedPR)) error {
+	schan, serr := f.Forge.RefreshPr(pr)
+	if serr != nil {
+		return serr
+	}
+
+	go func(pr *forge.PR) {
+		retcode := <-schan
+		complete(pr, retcode)
+	}(pr)
+
+	return nil
 }

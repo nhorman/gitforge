@@ -55,14 +55,29 @@ type Commit struct {
 }
 
 type PR struct {
-	PrId        int64        `json:"prid"`
-	Title       string       `json:"title"`
-	PullSpec    PrSpec       `json:"prspec"`
-	Discussions []Discussion `json:"discussions"`
-	Commits     []Commit     `json:"commits"`
+	PrId         int64        `json:"prid"`
+	CurrentToken string       `json:"currenttoken"`
+	Title        string       `json:"title"`
+	PullSpec     PrSpec       `json:"prspec"`
+	Discussions  []Discussion `json:"discussions"`
+	Commits      []Commit     `json:"commits"`
+}
+
+type UpdateResult int
+
+const (
+	UPDATE_CURRENT = iota
+	UPDATE_REREAD  = iota
+	UPDATE_FAILED  = iota
+)
+
+type UpdatedPR struct {
+	Result UpdateResult
+	Pr     *PR
 }
 
 type ForgeUIModel interface {
 	GetAllPrTitles() ([]PrTitle, error)
 	GetPr(idstring string) (*PR, error)
+	RefreshPr(pr *PR) (chan *UpdatedPR, error)
 }

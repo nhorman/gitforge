@@ -1,10 +1,12 @@
 package forgeuiview
 
 import (
+	"git-forge/forge"
 	"git-forge/ui/model"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"strconv"
+	"strings"
 )
 
 type MainPage struct {
@@ -71,12 +73,40 @@ func (m *MainPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		helpwindow, _ := GetPage("help")
 		helpwindow.SetPageInfo([]string{"H - This window",
 			"P - List all PRs for this project",
+			"R - Refresh PRs that are being watched",
 			"Q - Quit"})
 		PushPage("help")
 		return nil
 	case "Rune[p]":
 		PushPage("prlist")
 		return nil
+	case "Rune[r]":
+		count := m.prbox.GetItemCount()
+		model, _ := forgemodel.GetUiModel(nil)
+		for c := 1; c < count; c++ {
+			text, prid := m.prbox.GetItemText(c)
+			pr, err := model.GetLocalPr(prid)
+			if err != nil {
+				continue
+			}
+			m.prbox.SetItemText(c, text+"          UPDATING", prid)
+			uerr := model.RefreshPr(pr, func(pr *forge.PR, result *forge.UpdatedPR) {
+				switch result.Result {
+				default:
+					for j := 1; j < count; j++ {
+						itext, istext := m.prbox.GetItemText(j)
+						if istext == strconv.FormatInt(pr.PrId, 10) {
+							m.prbox.SetItemText(j, strings.TrimRight(itext, " UPDATING"), istext)
+						}
+					}
+				}
+			})
+
+			if uerr != nil {
+				m.prbox.SetItemText(c, text+"          FAILED", prid)
+			}
+		}
+
 	default:
 		return event
 	}
@@ -89,7 +119,7 @@ func (m *MainPage) PagePreDisplay() {
 	model, _ := forgemodel.GetUiModel(nil)
 	prs, _ := model.GetWatchedPrs()
 
-	m.prbox.AddItem("PR                TITLE", "-1", 0, nil)
+	m.prbox.AddItem("PR                TITLE                            STATUS", "-1", 0, nil)
 	for _, p := range prs {
 		m.prbox.AddItem(strconv.FormatInt(p.PrId, 10)+"                "+p.Title, strconv.FormatInt(p.PrId, 10), 0, nil)
 	}

@@ -5,6 +5,7 @@ import (
 	"git-forge/configset"
 	"git-forge/forge"
 	"github.com/ktrysmt/go-bitbucket"
+	"time"
 )
 
 func (f *BitBucketForge) GetAllPrTitles() ([]forge.PrTitle, error) {
@@ -68,8 +69,9 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 	}
 
 	retpr := forge.PR{
-		Title: pullrequest.Title,
-		PrId:  int64(pullrequest.ID),
+		CurrentToken: pullrequest.UpdatedOn.Format(time.UnixDate),
+		Title:        pullrequest.Title,
+		PrId:         int64(pullrequest.ID),
 		PullSpec: forge.PrSpec{
 			Source: forge.PrRemote{
 				URL:        pullrequest.Source.Repository.Links.HTML.Href,
@@ -136,4 +138,22 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 	}
 
 	return &retpr, nil
+}
+
+func (f *BitBucketForge) RefreshPr(pr *forge.PR) (chan *forge.UpdatedPR, error) {
+	update := make(chan *forge.UpdatedPR)
+	go func() {
+		updateRes := forge.UpdatedPR{}
+
+		_, nprerr := f.GetPr(string(pr.PrId))
+		if nprerr != nil {
+			updateRes.Pr = nil
+			updateRes.Result = forge.UPDATE_FAILED
+		}
+		updateRes.Pr = nil
+		updateRes.Result = forge.UPDATE_CURRENT
+		update <- &updateRes
+
+	}()
+	return update, nil
 }
