@@ -15,12 +15,13 @@ type ForgeUiModel struct {
 }
 
 type ForgeUiOpts interface {
+	GetWatchedPrs([]*forge.PR, error)
 	GetAllPrTitles() ([]forge.PrTitle, error)
 	AddWatchPr(idstring string) error
 	DelWatchPr(idstring string) error
 	PrIsWatched(idstring string) (bool, error)
-	GetWatchedPrs() ([]string, []string, error)
 	GetLocalPr(idstring string) (*forge.PR, error)
+	UpdateLocalPr(*forge.PR) error
 	GetPrInlineContent(*forge.PR, *forge.Discussion) (string, error)
 	RefreshPr(*forge.PR, func(*forge.PR, forge.UpdateResult)) error
 }
@@ -109,10 +110,8 @@ func (f *ForgeUiModel) PrIsWatched(idstring string) (bool, error) {
 	return true, nil
 }
 
-func (f *ForgeUiModel) GetWatchedPrs() ([]forge.PrTitle, error) {
-	//var titles []string = make([]string, 0)
-	var prs []forge.PrTitle = make([]forge.PrTitle, 0)
-	var ids []string = make([]string, 0)
+func (f *ForgeUiModel) GetWatchedPrs() ([]*forge.PR, error) {
+	var prs []*forge.PR = make([]*forge.PR, 0)
 	cfg := &forge.ForgeObj{}
 	repo, err := cfg.OpenLocalRepo()
 	if err != nil {
@@ -123,18 +122,13 @@ func (f *ForgeUiModel) GetWatchedPrs() ([]forge.PrTitle, error) {
 	refs.ForEach(func(ref *plumbing.Reference) error {
 		name := ref.Name().String()
 		if strings.Contains(name, "refs/prs/") == true {
-			ids = append(ids, strings.TrimPrefix(name, "refs/prs/"))
+			pr, prerr := f.GetLocalPr(strings.TrimPrefix(name, "refs/prs/"))
+			if prerr == nil {
+				prs = append(prs, pr)
+			}
 		}
 		return nil
 	})
-
-	for _, id := range ids {
-		pr, terr := f.GetLocalPr(id)
-		if terr != nil {
-			return nil, terr
-		}
-		prs = append(prs, forge.PrTitle{Title: pr.Title, PrId: pr.PrId})
-	}
 
 	return prs, nil
 }
@@ -152,6 +146,28 @@ func (f *ForgeUiModel) GetLocalPr(idstring string) (*forge.PR, error) {
 		return nil, err2
 	}
 	return &pr, nil
+}
+
+func (f *ForgeUiModel) UpdateLocalPr(pr *forge.PR) error {
+
+	jsonout, jerr := json.Marshal(pr)
+	if jerr != nil {
+		return jerr
+	}
+
+	cmd := exec.Command("git", "notes", "remove", "refs/prs/"+strconv.FormatInt(pr.PrId, 10))
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	notecmd := exec.Command("git", "notes", "add", "-m", string(jsonout), "refs/prs/"+strconv.FormatInt(pr.PrId, 10))
+	noteerr := notecmd.Run()
+	if noteerr != nil {
+		return noteerr
+	}
+
+	return nil
 }
 
 func (f *ForgeUiModel) GetPrInlineContent(pr *forge.PR, d *forge.Discussion) (string, error) {

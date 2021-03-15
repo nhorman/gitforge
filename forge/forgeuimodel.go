@@ -55,6 +55,7 @@ type Commit struct {
 }
 
 type PR struct {
+	Unread       bool         `json:"unread"`
 	PrId         int64        `json:"prid"`
 	CurrentToken string       `json:"currenttoken"`
 	Title        string       `json:"title"`

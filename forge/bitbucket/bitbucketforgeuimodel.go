@@ -70,6 +70,7 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 	}
 
 	retpr := forge.PR{
+		Unread:       true,
 		CurrentToken: pullrequest.UpdatedOn.Format(time.UnixDate),
 		Title:        pullrequest.Title,
 		PrId:         int64(pullrequest.ID),

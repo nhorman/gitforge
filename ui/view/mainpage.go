@@ -33,6 +33,9 @@ func NewMainPage(a *tview.Application) WindowPage {
 			PopUpError(err)
 			return
 		}
+		// Clear the Unread flag
+		pr.Unread = false
+		model.UpdateLocalPr(pr)
 		rpage, _ := GetPage("prreview")
 		rpage.SetPageInfo(pr)
 		PushPage("prreview")
@@ -105,6 +108,9 @@ func (m *MainPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 					myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          UPDATING", myinfo.SecondText)
 				case forge.UPDATE_FINISHED:
 					myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          CURRENT", myinfo.SecondText)
+					//redraw the screen to pick up the new
+					//flags
+					m.PagePreDisplay()
 				case forge.UPDATE_FAILED:
 					myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          FAILED", myinfo.SecondText)
 				default:
@@ -131,7 +137,11 @@ func (m *MainPage) PagePreDisplay() {
 
 	m.prbox.AddItem("PR                TITLE                            STATUS", "-1", 0, nil)
 	for _, p := range prs {
-		m.prbox.AddItem(strconv.FormatInt(p.PrId, 10)+"                "+p.Title, strconv.FormatInt(p.PrId, 10), 0, nil)
+		var mytitle string = p.Title
+		if p.Unread == true {
+			mytitle = "(NEW)" + p.Title
+		}
+		m.prbox.AddItem(strconv.FormatInt(p.PrId, 10)+"                "+mytitle, strconv.FormatInt(p.PrId, 10), 0, nil)
 	}
 	if len(prs) > 0 {
 		m.prbox.SetCurrentItem(1)
