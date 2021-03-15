@@ -100,22 +100,26 @@ func (m *MainPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			}
 			info := &RefreshInfo{m.prbox, c, text, prid}
 			uerr := model.RefreshPr(pr, func(pr *forge.PR, result *forge.UpdatedPR, data interface{}) {
-				myinfo := data.(*RefreshInfo)
-				switch result.Result {
-				case forge.UPDATE_CURRENT:
-					myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          CURRENT", myinfo.SecondText)
-				case forge.UPDATE_REPULL:
-					myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          UPDATING", myinfo.SecondText)
-				case forge.UPDATE_FINISHED:
-					myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          CURRENT", myinfo.SecondText)
-					//redraw the screen to pick up the new
-					//flags
-					m.PagePreDisplay()
-				case forge.UPDATE_FAILED:
-					myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          FAILED", myinfo.SecondText)
-				default:
-					myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          UNKNOWN", myinfo.SecondText)
-				}
+				go func() {
+					m.app.QueueUpdateDraw(func() {
+						myinfo := data.(*RefreshInfo)
+						switch result.Result {
+						case forge.UPDATE_CURRENT:
+							myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          CURRENT", myinfo.SecondText)
+						case forge.UPDATE_REPULL:
+							myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          UPDATING", myinfo.SecondText)
+						case forge.UPDATE_FINISHED:
+							myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          CURRENT", myinfo.SecondText)
+							//redraw the screen to pick up the new
+							//flags
+							m.PagePreDisplay()
+						case forge.UPDATE_FAILED:
+							myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          FAILED", myinfo.SecondText)
+						default:
+							myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          UNKNOWN", myinfo.SecondText)
+						}
+					})
+				}()
 			}, info)
 
 			if uerr != nil {
