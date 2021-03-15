@@ -76,17 +76,22 @@ func (m *PRListPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			m.listview.SetItemText(m.listview.GetCurrentItem(), strings.TrimPrefix(itemtext, "* "), pridstring)
 		} else {
 			add = true
-			m.listview.SetItemText(m.listview.GetCurrentItem(), "* "+itemtext, pridstring)
+			m.listview.SetItemText(m.listview.GetCurrentItem(), "* "+itemtext+" (FETCHING...)", pridstring)
 		}
-		model, _ := forgemodel.GetUiModel(nil)
-		if add == true {
-			werr = model.AddWatchPr(pridstring)
-		} else {
-			werr = model.DelWatchPr(pridstring)
-		}
-		if werr != nil {
-			PopUpError(werr)
-		}
+		go func() {
+			m.app.QueueUpdateDraw(func() {
+				model, _ := forgemodel.GetUiModel(nil)
+				if add == true {
+					werr = model.AddWatchPr(pridstring)
+					m.listview.SetItemText(m.listview.GetCurrentItem(), "* "+itemtext, pridstring)
+				} else {
+					werr = model.DelWatchPr(pridstring)
+				}
+				if werr != nil {
+					PopUpError(werr)
+				}
+			})
+		}()
 		return nil
 	default:
 		return event
