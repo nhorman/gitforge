@@ -189,32 +189,61 @@ type CommentValue struct {
 
 type PRComments struct {
 	Pagelen int            `json:"pagelen"`
+	Next    string         `json:"next,omitempty"`
 	Values  []CommentValue `json:"values,-"`
 	Page    int            `json:"page"`
 	Size    int            `json:"size"`
 }
 
-func GetPrCommentsFromBitBucket(baseurl string, owner string, slug string, user string, pass string, idstring string) (*PRComments, error) {
+func GetAllPrCommentsFromBitBucket(baseurl, owner, slug, user, pass, idstring string, cb func(prj *PRComments, data interface{}), mydata interface{}) error {
+
 	creq, cerr := http.NewRequest("GET", "https://"+baseurl+"/repositories/"+owner+"/"+slug+"/pullrequests/"+idstring+"/comments", nil)
 	if cerr != nil {
-		return nil, fmt.Errorf("Unable to fetch PR json: %s", cerr)
+		return fmt.Errorf("Unable to fetch PR json: %s", cerr)
 	}
 	creq.SetBasicAuth(user, pass)
 	cresp, crerr := http.DefaultClient.Do(creq)
 	if crerr != nil {
-		return nil, crerr
+		return crerr
 	}
-	defer cresp.Body.Close()
 
 	cbody, _ := ioutil.ReadAll(cresp.Body)
 
 	var output PRComments
 	err := json.Unmarshal(cbody, &output)
-	return &output, err
+	if err != nil {
+		return err
+	}
+
+	cresp.Body.Close()
+	cb(&output, mydata)
+
+	for output.Next != "" {
+		creq, cerr := http.NewRequest("GET", output.Next, nil)
+		if cerr != nil {
+			return fmt.Errorf("Unable to fetch PR json: %s", cerr)
+		}
+		creq.SetBasicAuth(user, pass)
+		cresp, crerr := http.DefaultClient.Do(creq)
+		if crerr != nil {
+			return crerr
+		}
+
+		output.Next = ""
+		cbody, _ := ioutil.ReadAll(cresp.Body)
+		cresp.Body.Close()
+		err := json.Unmarshal(cbody, &output)
+		if err != nil {
+			return err
+		}
+		cb(&output, mydata)
+	}
+	return nil
 }
 
 type PRCommits struct {
-	Pagelen int `json:"pagelen"`
+	Pagelen int    `json:"pagelen"`
+	Next    string `json:"next,omitempty"`
 	Values  []struct {
 		Hash       string `json:"hash"`
 		Repository struct {
@@ -269,16 +298,16 @@ type PRCommits struct {
 	Page int `json:"page"`
 }
 
-func GetPrCommitsFromBitBucket(baseurl string, owner string, slug string, user string, pass string, idstring string) (*PRCommits, error) {
+func GetAllPrCommitsFromBitBucket(baseurl, owner, slug, user, pass, idstring string, cb func(prc *PRCommits, data interface{}), mydata interface{}) error {
 
 	creq, cerr := http.NewRequest("GET", "https://"+baseurl+"/repositories/"+owner+"/"+slug+"/pullrequests/"+idstring+"/commits", nil)
 	if cerr != nil {
-		return nil, fmt.Errorf("Unable to fetch PR json: %s", cerr)
+		return fmt.Errorf("Unable to fetch PR json: %s", cerr)
 	}
 	creq.SetBasicAuth(user, pass)
 	cresp, crerr := http.DefaultClient.Do(creq)
 	if crerr != nil {
-		return nil, crerr
+		return crerr
 	}
 	defer cresp.Body.Close()
 
@@ -287,7 +316,33 @@ func GetPrCommitsFromBitBucket(baseurl string, owner string, slug string, user s
 	var output PRCommits
 
 	err := json.Unmarshal(cbody, &output)
-	return &output, err
+	if err != nil {
+		return err
+	}
+	cb(&output, mydata)
+
+	for output.Next != "" {
+		creq, cerr := http.NewRequest("GET", output.Next, nil)
+		if cerr != nil {
+			return fmt.Errorf("Unable to fetch PR commits json: %s", cerr)
+		}
+		creq.SetBasicAuth(user, pass)
+		cresp, crerr := http.DefaultClient.Do(creq)
+		if crerr != nil {
+			return crerr
+		}
+
+		output.Next = ""
+		cbody, _ := ioutil.ReadAll(cresp.Body)
+		cresp.Body.Close()
+		err := json.Unmarshal(cbody, &output)
+		if err != nil {
+			return err
+		}
+		cb(&output, mydata)
+	}
+
+	return nil
 }
 
 type PrCommitComments struct {
@@ -351,20 +406,21 @@ type PrCommitComments struct {
 		Type      string    `json:"type"`
 		ID        int       `json:"id"`
 	} `json:"values"`
-	Page int `json:"page"`
-	Size int `json:"size"`
+	Page int    `json:"page"`
+	Size int    `json:"size"`
+	Next string `json:"next, omitempty"`
 }
 
-func GetPrCommitCommentsFromBitBucket(url string, user string, pass string) (*PrCommitComments, error) {
+func GetAllPrCommitCommentsFromBitBucket(url, user, pass string, cb func(prc *PrCommitComments, data interface{}), mydata interface{}) error {
 
 	creq, cerr := http.NewRequest("GET", url, nil)
 	if cerr != nil {
-		return nil, fmt.Errorf("Unable to fetch PR Commit Comments json: %s", cerr)
+		return fmt.Errorf("Unable to fetch PR Commit Comments json: %s", cerr)
 	}
 	creq.SetBasicAuth(user, pass)
 	cresp, crerr := http.DefaultClient.Do(creq)
 	if crerr != nil {
-		return nil, crerr
+		return crerr
 	}
 	defer cresp.Body.Close()
 
@@ -373,5 +429,31 @@ func GetPrCommitCommentsFromBitBucket(url string, user string, pass string) (*Pr
 	var output PrCommitComments
 
 	err := json.Unmarshal(cbody, &output)
-	return &output, err
+	if err != nil {
+		return err
+	}
+	cb(&output, mydata)
+
+	for output.Next != "" {
+		creq, cerr := http.NewRequest("GET", output.Next, nil)
+		if cerr != nil {
+			return fmt.Errorf("Unable to fetch PR commits json: %s", cerr)
+		}
+		creq.SetBasicAuth(user, pass)
+		cresp, crerr := http.DefaultClient.Do(creq)
+		if crerr != nil {
+			return crerr
+		}
+
+		output.Next = ""
+		cbody, _ := ioutil.ReadAll(cresp.Body)
+		cresp.Body.Close()
+		err := json.Unmarshal(cbody, &output)
+		if err != nil {
+			return err
+		}
+		cb(&output, mydata)
+	}
+
+	return nil
 }

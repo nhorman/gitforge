@@ -87,58 +87,60 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 		Discussions: make([]forge.Discussion, 0),
 	}
 
-	comments, commenterr := GetPrCommentsFromBitBucket(f.cfg.ApiBaseUrl, owner, slug, f.cfg.User, f.cfg.Pass, idstring)
+	commenterr := GetAllPrCommentsFromBitBucket(f.cfg.ApiBaseUrl, owner, slug, f.cfg.User, f.cfg.Pass, idstring, func(comments *PRComments, data interface{}) {
+		myretpr := data.(*forge.PR)
+		for i := 0; i < len(comments.Values); i++ {
+			c := comments.Values[i]
+			if c.Deleted == true {
+				continue
+			}
+			newcomment := forge.Discussion{}
+			newcomment.Id = c.ID
+			newcomment.ParentId = c.Parent.ID
+			newcomment.Author = c.User.DisplayName
+			if c.Inline.Path == "" {
+				newcomment.Type = forge.GENERAL
+			} else {
+				newcomment.Type = forge.INLINE
+				newcomment.Inline.Path = c.Inline.Path
+				newcomment.Inline.Offset = c.Inline.To
+			}
+			newcomment.Content = c.Content.Raw
+			retpr.Discussions = append(myretpr.Discussions, newcomment)
+		}
+	}, &retpr)
+
 	if commenterr != nil {
 		return nil, commenterr
 	}
 
-	for i := 0; i < len(comments.Values); i++ {
-		c := comments.Values[i]
-		if c.Deleted == true {
-			continue
+	commiterr := GetAllPrCommitsFromBitBucket(f.cfg.ApiBaseUrl, owner, slug, f.cfg.User, f.cfg.Pass, idstring, func(commits *PRCommits, data interface{}) {
+		myretpr := data.(*forge.PR)
+		myretpr.Commits = make([]forge.Commit, 0)
+		for i := 0; i < len(commits.Values); i++ {
+			c := commits.Values[i]
+			newcommit := forge.Commit{}
+			newcommit.Comments = make([]forge.CommitCommentData, 0)
+			newcommit.Hash = c.Hash
+			GetAllPrCommitCommentsFromBitBucket(c.Links.Comments.Href, f.cfg.User, f.cfg.Pass, func(ccomments *PrCommitComments, data interface{}) {
+				mynewcommit := data.(*forge.Commit)
+				for j := 0; j < len(ccomments.Values); j++ {
+					cc := ccomments.Values[j]
+					newcomitcomment := forge.CommitCommentData{}
+					newcomitcomment.Author = cc.User.DisplayName
+					newcomitcomment.Content = cc.Content.Raw
+					newcomitcomment.Path = cc.Inline.Path
+					newcomitcomment.Offset = cc.Inline.To
+					mynewcommit.Comments = append(mynewcommit.Comments, newcomitcomment)
+				}
+			}, &newcommit)
+			myretpr.Commits = append(retpr.Commits, newcommit)
 		}
-		newcomment := forge.Discussion{}
-		newcomment.Id = c.ID
-		newcomment.ParentId = c.Parent.ID
-		newcomment.Author = c.User.DisplayName
-		if c.Inline.Path == "" {
-			newcomment.Type = forge.GENERAL
-		} else {
-			newcomment.Type = forge.INLINE
-			newcomment.Inline.Path = c.Inline.Path
-			newcomment.Inline.Offset = c.Inline.To
-		}
-		newcomment.Content = c.Content.Raw
-		retpr.Discussions = append(retpr.Discussions, newcomment)
-	}
+	}, &retpr)
 
-	commits, commiterr := GetPrCommitsFromBitBucket(f.cfg.ApiBaseUrl, owner, slug, f.cfg.User, f.cfg.Pass, idstring)
 	if commiterr != nil {
 		return nil, commiterr
 	}
-
-	retpr.Commits = make([]forge.Commit, 0)
-	for i := 0; i < len(commits.Values); i++ {
-		c := commits.Values[i]
-		newcommit := forge.Commit{}
-		newcommit.Comments = make([]forge.CommitCommentData, 0)
-		newcommit.Hash = c.Hash
-		ccomments, commenterr := GetPrCommitCommentsFromBitBucket(c.Links.Comments.Href, f.cfg.User, f.cfg.Pass)
-		if commenterr == nil {
-			for j := 0; j < len(ccomments.Values); j++ {
-				cc := ccomments.Values[j]
-				newcomitcomment := forge.CommitCommentData{}
-				newcomitcomment.Author = cc.User.DisplayName
-				newcomitcomment.Content = cc.Content.Raw
-				newcomitcomment.Path = cc.Inline.Path
-				newcomitcomment.Offset = cc.Inline.To
-				newcommit.Comments = append(newcommit.Comments, newcomitcomment)
-			}
-
-		}
-		retpr.Commits = append(retpr.Commits, newcommit)
-	}
-
 	return &retpr, nil
 }
 
