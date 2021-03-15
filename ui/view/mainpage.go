@@ -6,7 +6,6 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"strconv"
-	"strings"
 )
 
 type MainPage struct {
@@ -66,6 +65,13 @@ func (m *MainPage) GetWindowPrimitive() tview.Primitive {
 	return m.mainflex
 }
 
+type RefreshInfo struct {
+	L          *tview.List
+	ListItem   int
+	BaseTitle  string
+	SecondText string
+}
+
 func (m *MainPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 	runekey := event.Name()
 	switch runekey {
@@ -89,18 +95,22 @@ func (m *MainPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			if err != nil {
 				continue
 			}
-			m.prbox.SetItemText(c, text+"          UPDATING", prid)
-			uerr := model.RefreshPr(pr, func(pr *forge.PR, result *forge.UpdatedPR) {
+			info := &RefreshInfo{m.prbox, c, text, prid}
+			uerr := model.RefreshPr(pr, func(pr *forge.PR, result *forge.UpdatedPR, data interface{}) {
+				myinfo := data.(*RefreshInfo)
 				switch result.Result {
+				case forge.UPDATE_CURRENT:
+					myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          CURRENT", myinfo.SecondText)
+				case forge.UPDATE_REPULL:
+					myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          UPDATING", myinfo.SecondText)
+				case forge.UPDATE_FINISHED:
+					myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          CURRENT", myinfo.SecondText)
+				case forge.UPDATE_FAILED:
+					myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          FAILED", myinfo.SecondText)
 				default:
-					for j := 1; j < count; j++ {
-						itext, istext := m.prbox.GetItemText(j)
-						if istext == strconv.FormatInt(pr.PrId, 10) {
-							m.prbox.SetItemText(j, strings.TrimRight(itext, " UPDATING"), istext)
-						}
-					}
+					myinfo.L.SetItemText(myinfo.ListItem, myinfo.BaseTitle+"          UNKNOWN", myinfo.SecondText)
 				}
-			})
+			}, info)
 
 			if uerr != nil {
 				m.prbox.SetItemText(c, text+"          FAILED", prid)

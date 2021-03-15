@@ -66,9 +66,10 @@ type PR struct {
 type UpdateResult int
 
 const (
-	UPDATE_CURRENT = iota
-	UPDATE_REREAD  = iota
-	UPDATE_FAILED  = iota
+	UPDATE_CURRENT  = iota //Means that the current cached pr is up to date
+	UPDATE_REPULL   = iota //Means that the current cached pr is being updated by the model
+	UPDATE_FINISHED = iota //Means that the model is done with all updated (this is always sent in the non failure case)
+	UPDATE_FAILED   = iota //Means that the update failed
 )
 
 type UpdatedPR struct {

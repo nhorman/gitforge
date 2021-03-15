@@ -57,6 +57,11 @@ func (f *ForgeUiModel) AddWatchPr(idstring string) error {
 	if err != nil {
 		return err
 	}
+	return f.addWatchPr(pr)
+}
+
+func (f *ForgeUiModel) addWatchPr(pr *forge.PR) error {
+
 	jsonout, jerr := json.Marshal(pr)
 	if jerr != nil {
 		return jerr
@@ -70,7 +75,7 @@ func (f *ForgeUiModel) AddWatchPr(idstring string) error {
 	notecmd := exec.Command("git", "notes", "add", "-m", string(jsonout), "refs/prs/"+strconv.FormatInt(pr.PrId, 10))
 	noteerr := notecmd.Run()
 	if noteerr != nil {
-		unwindcmd := exec.Command("git", "update-ref", "-d", "refs/prs"+idstring)
+		unwindcmd := exec.Command("git", "update-ref", "-d", "refs/prs"+strconv.FormatInt(pr.PrId, 10))
 		unwinderr := unwindcmd.Run()
 		if unwinderr != nil {
 			return unwinderr
@@ -166,7 +171,7 @@ func (f *ForgeUiModel) GetPrInlineContent(pr *forge.PR, d *forge.Discussion) (st
 	return ret, nil
 }
 
-func (f *ForgeUiModel) RefreshPr(pr *forge.PR, complete func(pr *forge.PR, result *forge.UpdatedPR)) error {
+func (f *ForgeUiModel) RefreshPr(pr *forge.PR, complete func(pr *forge.PR, result *forge.UpdatedPR, data interface{}), data interface{}) error {
 	schan, serr := f.Forge.RefreshPr(pr)
 	if serr != nil {
 		return serr
@@ -174,7 +179,23 @@ func (f *ForgeUiModel) RefreshPr(pr *forge.PR, complete func(pr *forge.PR, resul
 
 	go func(pr *forge.PR) {
 		retcode := <-schan
-		complete(pr, retcode)
+		complete(pr, retcode, data)
+		switch retcode.Result {
+		case forge.UPDATE_CURRENT:
+			// Nothing to do
+		case forge.UPDATE_REPULL:
+			f.DelWatchPr(strconv.FormatInt(pr.PrId, 10))
+			f.addWatchPr(retcode.Pr)
+			retcode.Result = forge.UPDATE_CURRENT
+			complete(pr, retcode, data)
+		case forge.UPDATE_FINISHED:
+			// Nothing to do here, we do this below
+		case forge.UPDATE_FAILED:
+			// Nothing to do here
+		default:
+		}
+		retcode.Result = forge.UPDATE_FINISHED
+		complete(pr, retcode, data)
 	}(pr)
 
 	return nil
