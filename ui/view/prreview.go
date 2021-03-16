@@ -5,12 +5,15 @@ import (
 	"git-forge/ui/model"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+	//"gopkg.in/src-d/go-git.v4/plumbing/object"
+	"fmt"
 	"strconv"
+	"strings"
 )
 
 type PRReviewPage struct {
 	discussions *tview.TreeView
-	commits     *tview.List
+	commits     *tview.TreeView
 	display     *tview.TextView
 	topflex     *tview.Flex
 	pr          *forge.PR
@@ -37,7 +40,7 @@ func NewPRReviewPage(a *tview.Application) WindowPage {
 	PRPage.discussions = tview.NewTreeView()
 	PRPage.discussions.Box.SetTitle("Discussions")
 	PRPage.discussions.Box.SetBorder(true)
-	PRPage.commits = tview.NewList()
+	PRPage.commits = tview.NewTreeView()
 	PRPage.commits.Box.SetTitle("Commits")
 	PRPage.commits.Box.SetBorder(true)
 	PRPage.display = tview.NewTextView()
@@ -135,12 +138,175 @@ func (m *PRReviewPage) populateDiscussions() {
 
 }
 
+type CommentThread struct {
+	Data     *forge.CommitCommentData
+	Hash     string
+	Parent   *CommentThread
+	Children []*CommentThread
+	Node     *tview.TreeNode
+	HLID     string
+	Content  string
+	Offset   int
+	Path     string
+}
+
+func buildCommitComentThreadStrings(root *CommentThread, thread int, level int, idx int, basetabs string) (string, error) {
+	var comments []string = make([]string, 0)
+	//Capture our content
+	if root.Data != nil {
+		localcontent := fmt.Sprintf("[\"comment%d.%d.%d\"]%s[\"\"]", thread, level, idx, root.Data.Content)
+		root.HLID = fmt.Sprintf("comment%d.%d.%d", thread, level, idx)
+		localtabbedcontent := basetabs + strings.Replace(localcontent, "\n", basetabs, -1) + "\n"
+		content := strings.Split(localtabbedcontent, "\n")
+		comments = append(comments, content...)
+	}
+	newbasetabs := basetabs + "\t"
+	var newidx int = 1
+	for _, kid := range root.Children {
+		kidcontent, _ := buildCommitComentThreadStrings(kid, thread, level+1, newidx, newbasetabs)
+		newidx = newidx + 1
+		comments = append(comments, kidcontent)
+	}
+
+	return strings.Join(comments, "\n"), nil
+}
+
+func setContentForChildren(root *CommentThread, content string) {
+
+	root.Content = content
+	root.Node.SetReference(root)
+	for _, kid := range root.Children {
+		setContentForChildren(kid, content)
+	}
+}
+
+func insertThreadIntoCommit(commit string, threadcontent string, t *CommentThread) string {
+	var foundpath bool = false
+	var foundregion bool = false
+
+	commitlines := strings.Split(commit, "\n")
+	var idx int = 0
+	for _, cl := range commitlines {
+		var offset int = 0
+		var offsetsize int = 0
+		words := strings.Split(cl, " ")
+		if words[0] == "diff" && words[2][2:] == t.Path {
+			foundpath = true
+		}
+		if foundpath == true && words[0] == "@@" {
+			offsetbit := strings.Split(words[2], ",")
+			offset, _ = strconv.Atoi(strings.Trim(offsetbit[0], "+"))
+			offsetsize, _ = strconv.Atoi(offsetbit[1])
+			if (t.Offset >= offset) && (t.Offset <= offset+offsetsize) {
+				foundregion = true
+			}
+		}
+
+		if foundpath == true && foundregion == true {
+			delta := t.Offset - offset
+			idx = idx + delta + 1
+			break
+		}
+		idx = idx + 1
+	}
+
+	outputcontent := make([]string, 0)
+	outputcontent = append(outputcontent, commitlines[0:idx]...)
+	outputcontent = append(outputcontent, threadcontent)
+	outputcontent = append(outputcontent, commitlines[idx+1:]...)
+
+	return strings.Join(outputcontent, "\n")
+
+}
+
+func (m *PRReviewPage) populateCommitComments(child *tview.TreeNode, c *forge.Commit, allcommits []forge.CommitCommentData) {
+	var nodemap map[int]*CommentThread = make(map[int]*CommentThread, 0)
+	var ids []int = make([]int, 0)
+
+	model, _ := forgemodel.GetUiModel(nil)
+	nodemap[0] = &CommentThread{nil, c.Hash, nil, make([]*CommentThread, 0), child, "", "", 0, ""}
+
+	root := nodemap[0]
+	ids = append(ids, 0)
+
+	//iterate over our id list and find threads at each level
+	for len(ids) != 0 {
+		n := len(ids) - 1
+		id := ids[n]
+		ids = ids[:n]
+		for i := 0; i < len(allcommits); i++ {
+			idx := &allcommits[i]
+			if idx.ParentId == id {
+				//this commit has the current id as a parent, so
+				//its a child
+				parent := nodemap[id]
+				newchild := &CommentThread{idx, c.Hash, parent, make([]*CommentThread, 0), tview.NewTreeNode(idx.Content), "", "", idx.Offset, idx.Path}
+				parent.Node.AddChild(newchild.Node)
+				parent.Children = append(parent.Children, newchild)
+				ids = append(ids, idx.Id)
+				nodemap[idx.Id] = newchild
+			}
+		}
+	}
+
+	root.Content = model.GetCommitData(c.Hash)
+	root.HLID = ""
+	root.Node.SetReference(root)
+	// now we have a tree of comments for a given commit
+	// now bundle each path down the tree into its own slice of strings
+	var j int = 1
+	for _, t := range root.Children {
+		commentthread, _ := buildCommitComentThreadStrings(t, j, 1, 1, "\n\t")
+		threadcontent := insertThreadIntoCommit(root.Content, commentthread, t)
+		setContentForChildren(t, threadcontent)
+		j = j + 1
+	}
+}
+
+func (m *PRReviewPage) populateCommits() {
+	model, _ := forgemodel.GetUiModel(nil)
+	troot := tview.NewTreeNode("Commits")
+	var first *tview.TreeNode = nil
+	parent := troot
+	m.commits.SetRoot(troot)
+	m.commits.SetTopLevel(1)
+
+	m.commits.SetSelectedFunc(func(node *tview.TreeNode) {
+		data := node.GetReference().(*CommentThread)
+		m.display.SetRegions(false)
+		m.display.SetText(data.Content)
+		if data.HLID != "" {
+			m.display.SetRegions(true)
+			m.display.Highlight(data.HLID)
+			m.display.ScrollToHighlight()
+		}
+	})
+
+	for _, c := range m.pr.Commits {
+		var line string = c.Hash
+		commit, cerr := model.GetCommit(c.Hash)
+		if cerr == nil {
+			title := strings.Split(commit.Message, "\n")
+			line = line + " - " + title[0]
+		}
+		child := tview.NewTreeNode(line).SetSelectable(true)
+
+		m.populateCommitComments(child, &c, c.Comments)
+		parent.AddChild(child)
+		if first == nil {
+			first = child
+		}
+	}
+	m.commits.SetCurrentNode(first)
+}
+
 func (m *PRReviewPage) PagePreDisplay() {
 	m.display.Box.SetTitle("Discussions for PR " + strconv.FormatInt(m.pr.PrId, 10) + ": " + m.pr.Title)
 	m.display.Clear()
 	focusidx = 0
 	m.app.SetFocus(focusList[focusidx])
 	m.populateDiscussions()
+	m.populateCommits()
 	return
 }
 

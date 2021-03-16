@@ -2,6 +2,7 @@ package forgemodel
 
 import (
 	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	//"gopkg.in/src-d/go-git.v4/config"
 	"encoding/json"
 	"git-forge/forge"
@@ -24,6 +25,8 @@ type ForgeUiOpts interface {
 	UpdateLocalPr(*forge.PR) error
 	GetPrInlineContent(*forge.PR, *forge.Discussion) (string, error)
 	RefreshPr(*forge.PR, func(*forge.PR, forge.UpdateResult)) error
+	GetCommit(hash string)
+	GetCommitData(hash string)
 }
 
 func NewUiModel(forge forge.ForgeUIModel) (*ForgeUiModel, error) {
@@ -215,4 +218,29 @@ func (f *ForgeUiModel) RefreshPr(pr *forge.PR, complete func(pr *forge.PR, resul
 	}(pr)
 
 	return nil
+}
+
+func (f *ForgeUiModel) GetCommit(hash string) (*object.Commit, error) {
+	cfg := &forge.ForgeObj{}
+	repo, err := cfg.OpenLocalRepo()
+	if err != nil {
+		return nil, err
+	}
+
+	c, objerr := repo.CommitObject(plumbing.NewHash(hash))
+
+	if objerr != nil {
+		return nil, objerr
+	}
+
+	return c, nil
+}
+
+func (f *ForgeUiModel) GetCommitData(hash string) string {
+	cmd := exec.Command("git", "show", "--pretty=full", hash)
+	content, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	return string(content)
 }
