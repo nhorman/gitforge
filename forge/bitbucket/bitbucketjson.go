@@ -405,6 +405,18 @@ type PrCommitComments struct {
 		UpdatedOn time.Time `json:"updated_on"`
 		Type      string    `json:"type"`
 		ID        int       `json:"id"`
+		Parent    struct {
+			Type  string `json:"type"`
+			ID    int    `json:"id"`
+			Links struct {
+				Self struct {
+					Href string `json:"href"`
+				} `json:"self"`
+				HTML struct {
+					Href string `json:"href"`
+				} `json:"html"`
+			} `json:"links"`
+		} `json:"parent,omitempty"`
 	} `json:"values"`
 	Page int    `json:"page"`
 	Size int    `json:"size"`

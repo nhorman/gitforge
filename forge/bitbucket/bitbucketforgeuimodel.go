@@ -126,7 +126,12 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 				mynewcommit := data.(*forge.Commit)
 				for j := 0; j < len(ccomments.Values); j++ {
 					cc := ccomments.Values[j]
+					if cc.Deleted == true {
+						continue
+					}
 					newcomitcomment := forge.CommitCommentData{}
+					newcomitcomment.Id = cc.ID
+					newcomitcomment.ParentId = cc.Parent.ID
 					newcomitcomment.Author = cc.User.DisplayName
 					newcomitcomment.Content = cc.Content.Raw
 					newcomitcomment.Path = cc.Inline.Path

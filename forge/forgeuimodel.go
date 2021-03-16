@@ -43,10 +43,12 @@ type Discussion struct {
 }
 
 type CommitCommentData struct {
-	Author  string `json:"author"`
-	Content string `json:"content"`
-	Path    string `json:"path"`
-	Offset  int    `json:"offset"`
+	Id       int    `json:"id"`
+	ParentId int    `json:"parentid"`
+	Author   string `json:"author"`
+	Content  string `json:"content"`
+	Path     string `json:"path"`
+	Offset   int    `json:"offset"`
 }
 
 type Commit struct {
