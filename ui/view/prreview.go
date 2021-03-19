@@ -73,8 +73,14 @@ func (m *PRReviewPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		helpwindow, _ := GetPage("help")
 		helpwindow.SetPageInfo([]string{"H - This window",
 			"Tab - Move between Discussion and Commit Pane",
+			"R - Respond To selected Comment",
 			"Q - Back up to main window"})
 		PushPage("help")
+		return nil
+	case "Rune[r]":
+		respwindow, _ := GetPage("response")
+		respwindow.SetPageInfo(&PageResponseInfo{m.display.GetText(false)})
+		PushPage("response")
 		return nil
 	case "Rune[q]":
 		PopPage()

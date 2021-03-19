@@ -122,6 +122,9 @@ func DisplayTopLevelWindow(a *tview.Application, c TopLevelControls) error {
 	reviewpage := NewPRReviewPage(a)
 	RegisterPage("prreview", reviewpage, true, false)
 
+	responsepage := NewResponsePage(a)
+	RegisterPage("response", responsepage, true, false)
+
 	a.SetInputCapture(inputEventHandler)
 	a.SetRoot(mainwindowpages, true)
 	a.Run()
