@@ -84,7 +84,7 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 				BranchName: pullrequest.Destination.Branch.Name,
 			},
 		},
-		Discussions: make([]forge.Discussion, 0),
+		Discussions: make([]forge.CommentData, 0),
 	}
 
 	commenterr := GetAllPrCommentsFromBitBucket(f.cfg.ApiBaseUrl, owner, slug, f.cfg.User, f.cfg.Pass, idstring, func(comments *PRComments, data interface{}) {
@@ -94,7 +94,7 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 			if c.Deleted == true {
 				continue
 			}
-			newcomment := forge.Discussion{}
+			newcomment := forge.CommentData{}
 			newcomment.Id = c.ID
 			newcomment.ParentId = c.Parent.ID
 			newcomment.Author = c.User.DisplayName
@@ -102,8 +102,8 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 				newcomment.Type = forge.GENERAL
 			} else {
 				newcomment.Type = forge.INLINE
-				newcomment.Inline.Path = c.Inline.Path
-				newcomment.Inline.Offset = c.Inline.To
+				newcomment.Path = c.Inline.Path
+				newcomment.Offset = c.Inline.To
 			}
 			newcomment.Content = c.Content.Raw
 			retpr.Discussions = append(myretpr.Discussions, newcomment)
@@ -120,7 +120,7 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 		for i := 0; i < len(commits.Values); i++ {
 			c := commits.Values[i]
 			newcommit := forge.Commit{}
-			newcommit.Comments = make([]forge.CommitCommentData, 0)
+			newcommit.Comments = make([]forge.CommentData, 0)
 			newcommit.Hash = c.Hash
 			GetAllPrCommitCommentsFromBitBucket(c.Links.Comments.Href, f.cfg.User, f.cfg.Pass, func(ccomments *PrCommitComments, data interface{}) {
 				mynewcommit := data.(*forge.Commit)
@@ -129,7 +129,7 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 					if cc.Deleted == true {
 						continue
 					}
-					newcomitcomment := forge.CommitCommentData{}
+					newcomitcomment := forge.CommentData{}
 					newcomitcomment.Id = cc.ID
 					newcomitcomment.ParentId = cc.Parent.ID
 					newcomitcomment.Author = cc.User.DisplayName

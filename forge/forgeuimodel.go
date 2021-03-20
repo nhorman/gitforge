@@ -29,42 +29,29 @@ const (
 	COMMIT  DiscussionType = iota
 )
 
-type InlineCommentData struct {
-	Path   string `json:"path"`
-	Offset int    `json:"offset"`
-}
-
-type Discussion struct {
-	Id       int               `json:"id"`
-	ParentId int               `json:"parentid"`
-	Type     DiscussionType    `json:"type"`
-	Inline   InlineCommentData `json:"inlinedata"`
-	Author   string            `json:"author"`
-	Content  string            `json::"content"`
-}
-
-type CommitCommentData struct {
-	Id       int    `json:"id"`
-	ParentId int    `json:"parentid"`
-	Author   string `json:"author"`
-	Content  string `json:"content"`
-	Path     string `json:"path"`
-	Offset   int    `json:"offset"`
+type CommentData struct {
+	Id       int            `json:"id"`
+	ParentId int            `json:"parentid"`
+	Type     DiscussionType `json:"type`
+	Author   string         `json:"author"`
+	Content  string         `json:"content"`
+	Path     string         `json:"path"`
+	Offset   int            `json:"offset"`
 }
 
 type Commit struct {
-	Hash     string              `json:"hash"`
-	Comments []CommitCommentData `json:"comments"`
+	Hash     string        `json:"hash"`
+	Comments []CommentData `json:"comments"`
 }
 
 type PR struct {
-	Unread       bool         `json:"unread"`
-	PrId         int64        `json:"prid"`
-	CurrentToken string       `json:"currenttoken"`
-	Title        string       `json:"title"`
-	PullSpec     PrSpec       `json:"prspec"`
-	Discussions  []Discussion `json:"discussions"`
-	Commits      []Commit     `json:"commits"`
+	Unread       bool          `json:"unread"`
+	PrId         int64         `json:"prid"`
+	CurrentToken string        `json:"currenttoken"`
+	Title        string        `json:"title"`
+	PullSpec     PrSpec        `json:"prspec"`
+	Discussions  []CommentData `json:"discussions"`
+	Commits      []Commit      `json:"commits"`
 }
 
 type UpdateResult int

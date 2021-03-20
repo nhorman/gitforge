@@ -26,7 +26,7 @@ type PRReviewPage struct {
 }
 
 type DiscussionId struct {
-	c forge.Discussion
+	c forge.CommentData
 	m *PRReviewPage
 }
 
@@ -180,7 +180,7 @@ func (m *PRReviewPage) populateDiscussions() {
 }
 
 type CommentThread struct {
-	Data     *forge.CommitCommentData
+	Data     *forge.CommentData
 	Hash     string
 	Parent   *CommentThread
 	Children []*CommentThread
@@ -260,7 +260,7 @@ func insertThreadIntoCommit(commit string, threadcontent string, t *CommentThrea
 
 }
 
-func (m *PRReviewPage) populateCommitComments(child *tview.TreeNode, c *forge.Commit, allcommits []forge.CommitCommentData) {
+func (m *PRReviewPage) populateCommitComments(child *tview.TreeNode, c *forge.Commit, allcommits []forge.CommentData) {
 	var nodemap map[int]*CommentThread = make(map[int]*CommentThread, 0)
 	var ids []int = make([]int, 0)
 

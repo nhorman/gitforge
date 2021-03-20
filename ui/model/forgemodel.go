@@ -23,7 +23,7 @@ type ForgeUiOpts interface {
 	PrIsWatched(idstring string) (bool, error)
 	GetLocalPr(idstring string) (*forge.PR, error)
 	UpdateLocalPr(*forge.PR) error
-	GetPrInlineContent(*forge.PR, *forge.Discussion) (string, error)
+	GetPrInlineContent(*forge.PR, *forge.CommentData) (string, error)
 	RefreshPr(*forge.PR, func(*forge.PR, forge.UpdateResult)) error
 	GetCommit(hash string)
 	GetCommitData(hash string)
@@ -174,18 +174,18 @@ func (f *ForgeUiModel) UpdateLocalPr(pr *forge.PR) error {
 	return nil
 }
 
-func (f *ForgeUiModel) GetPrInlineContent(pr *forge.PR, d *forge.Discussion) (string, error) {
-	cmd := exec.Command("git", "show", "refs/prs/"+strconv.FormatInt(pr.PrId, 10)+":"+d.Inline.Path)
+func (f *ForgeUiModel) GetPrInlineContent(pr *forge.PR, d *forge.CommentData) (string, error) {
+	cmd := exec.Command("git", "show", "refs/prs/"+strconv.FormatInt(pr.PrId, 10)+":"+d.Path)
 	content, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
 	var newcontent []string = make([]string, 0)
 	contentlines := strings.Split(string(content), "\n")
-	newcontent = append(newcontent, contentlines[0:d.Inline.Offset-1]...)
-	newcontent = append(newcontent, contentlines[d.Inline.Offset]+"[\"comment\"]")
+	newcontent = append(newcontent, contentlines[0:d.Offset-1]...)
+	newcontent = append(newcontent, contentlines[d.Offset]+"[\"comment\"]")
 	newcontent = append(newcontent, d.Content+"[\"\"]")
-	newcontent = append(newcontent, contentlines[d.Inline.Offset+1:]...)
+	newcontent = append(newcontent, contentlines[d.Offset+1:]...)
 
 	ret := strings.Join(newcontent, "\n")
 	return ret, nil
