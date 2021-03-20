@@ -26,6 +26,7 @@ type DiscussionType int
 const (
 	GENERAL DiscussionType = iota
 	INLINE  DiscussionType = iota
+	COMMIT  DiscussionType = iota
 )
 
 type InlineCommentData struct {

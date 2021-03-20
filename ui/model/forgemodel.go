@@ -27,6 +27,7 @@ type ForgeUiOpts interface {
 	RefreshPr(*forge.PR, func(*forge.PR, forge.UpdateResult)) error
 	GetCommit(hash string)
 	GetCommitData(hash string)
+	PostComment(Comment string) error
 }
 
 func NewUiModel(forge forge.ForgeUIModel) (*ForgeUiModel, error) {
@@ -243,4 +244,8 @@ func (f *ForgeUiModel) GetCommitData(hash string) string {
 		return ""
 	}
 	return string(content)
+}
+
+func (f *ForgeUiModel) PostComment(Comment string) error {
+	return nil
 }

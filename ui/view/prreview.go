@@ -6,7 +6,11 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	//"gopkg.in/src-d/go-git.v4/plumbing/object"
+	"bufio"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -78,9 +82,40 @@ func (m *PRReviewPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		PushPage("help")
 		return nil
 	case "Rune[r]":
-		respwindow, _ := GetPage("response")
-		respwindow.SetPageInfo(&PageResponseInfo{m.display.GetText(false)})
-		PushPage("response")
+		respcomment := m.display.GetText(true)
+		comment, err := ioutil.TempFile("", "GITFORGE")
+		if err != nil {
+			PopUpError(err)
+		}
+		defer os.Remove(comment.Name())
+		comment.Write([]byte(respcomment))
+
+		response, err := ioutil.TempFile("", "GITFORGERESPONSE")
+		if err != nil {
+			PopUpError(err)
+		}
+		defer os.Remove(response.Name())
+
+		m.app.Suspend(func() {
+			command := os.Getenv("GITFORGE_EDITOR")
+			cmd := exec.Command(command, comment.Name())
+			fmt.Printf("%s\n", cmd.String())
+			cmd.Stdout = os.Stdout
+			cmd.Stdin = os.Stdin
+			cmd.Stderr = os.Stderr
+			err := cmd.Run()
+			if err != nil {
+				fmt.Printf("Failed to start editor: %s\n", err)
+				fmt.Printf("press enter to return to review")
+				reader := bufio.NewReader(os.Stdin)
+				reader.ReadString('\n')
+			}
+		})
+		responseText, _ := ioutil.ReadFile(response.Name())
+		response.Close()
+		comment.Close()
+		model, _ := forgemodel.GetUiModel(nil)
+		model.PostComment(string(responseText))
 		return nil
 	case "Rune[q]":
 		PopPage()
