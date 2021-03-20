@@ -19,6 +19,7 @@ type PRReviewPage struct {
 	discussions *tview.TreeView
 	commits     *tview.TreeView
 	display     *tview.TextView
+	selcomment  *forge.CommentData
 	topflex     *tview.Flex
 	pr          *forge.PR
 	app         *tview.Application
@@ -53,6 +54,7 @@ func NewPRReviewPage(a *tview.Application) WindowPage {
 	toprow.AddItem(PRPage.commits, 0, 1, true)
 	bottomrow.AddItem(PRPage.display, 0, 1, true)
 	PRPage.app = a
+	PRPage.selcomment = nil
 	focusList = []tview.Primitive{PRPage.discussions, PRPage.commits, PRPage.display}
 
 	return &PRPage
@@ -70,6 +72,56 @@ func (m *PRReviewPage) GetWindowPrimitive() tview.Primitive {
 	return m.topflex
 }
 
+func (m *PRReviewPage) HandleComment(newcomment bool) {
+	var comment *os.File = nil
+	var err error
+	var commentname string = ""
+	var oldcomment *forge.CommentData = m.selcomment
+
+	respcomment := m.display.GetText(true)
+	comment, err = ioutil.TempFile("", "GITFORGE")
+	if err != nil {
+		PopUpError(err)
+	}
+	defer os.Remove(comment.Name())
+	comment.Write([]byte(respcomment))
+	commentname = comment.Name()
+
+	response, err := ioutil.TempFile("", "GITFORGERESPONSE")
+	if err != nil {
+		PopUpError(err)
+	}
+	defer os.Remove(response.Name())
+
+	m.app.Suspend(func() {
+		command := os.Getenv("GITFORGE_EDITOR")
+		cmd := exec.Command(command, response.Name(), commentname)
+		fmt.Printf("%s\n", cmd.String())
+		cmd.Stdout = os.Stdout
+		cmd.Stdin = os.Stdin
+		cmd.Stderr = os.Stderr
+		err := cmd.Run()
+		fmt.Printf("CMD COMPLETES\n")
+		if err != nil {
+			fmt.Printf("Failed to start editor: %s\n", err)
+			fmt.Printf("press enter to return to review")
+			reader := bufio.NewReader(os.Stdin)
+			reader.ReadString('\n')
+		}
+	})
+	responseText, _ := ioutil.ReadFile(response.Name())
+	response.Close()
+	comment.Close()
+	model, _ := forgemodel.GetUiModel(nil)
+	if newcomment == true {
+		oldcomment = nil
+	}
+	newcommentdata := &forge.CommentData{}
+	newcommentdata.Content = string(responseText)
+	//TODO: Determine New comment type here based on oldcomment type?
+	model.PostComment(m.pr, oldcomment, newcommentdata)
+}
+
 func (m *PRReviewPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 	runekey := event.Name()
 	switch runekey {
@@ -77,45 +129,15 @@ func (m *PRReviewPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		helpwindow, _ := GetPage("help")
 		helpwindow.SetPageInfo([]string{"H - This window",
 			"Tab - Move between Discussion and Commit Pane",
+			"C - Start a new comment thread",
 			"R - Respond To selected Comment",
 			"Q - Back up to main window"})
 		PushPage("help")
 		return nil
+	case "Rune[c]":
+		m.HandleComment(true)
 	case "Rune[r]":
-		respcomment := m.display.GetText(true)
-		comment, err := ioutil.TempFile("", "GITFORGE")
-		if err != nil {
-			PopUpError(err)
-		}
-		defer os.Remove(comment.Name())
-		comment.Write([]byte(respcomment))
-
-		response, err := ioutil.TempFile("", "GITFORGERESPONSE")
-		if err != nil {
-			PopUpError(err)
-		}
-		defer os.Remove(response.Name())
-
-		m.app.Suspend(func() {
-			command := os.Getenv("GITFORGE_EDITOR")
-			cmd := exec.Command(command, comment.Name())
-			fmt.Printf("%s\n", cmd.String())
-			cmd.Stdout = os.Stdout
-			cmd.Stdin = os.Stdin
-			cmd.Stderr = os.Stderr
-			err := cmd.Run()
-			if err != nil {
-				fmt.Printf("Failed to start editor: %s\n", err)
-				fmt.Printf("press enter to return to review")
-				reader := bufio.NewReader(os.Stdin)
-				reader.ReadString('\n')
-			}
-		})
-		responseText, _ := ioutil.ReadFile(response.Name())
-		response.Close()
-		comment.Close()
-		model, _ := forgemodel.GetUiModel(nil)
-		model.PostComment(string(responseText))
+		m.HandleComment(false)
 		return nil
 	case "Rune[q]":
 		PopPage()
@@ -143,6 +165,7 @@ func (m *PRReviewPage) populateDiscussions() {
 		if data.c.Type == forge.GENERAL {
 			data.m.display.SetRegions(false)
 			data.m.display.SetText(data.c.Content)
+			data.m.selcomment = &data.c
 		} else if data.c.Type == forge.INLINE {
 			data.m.display.SetRegions(true)
 			model, _ := forgemodel.GetUiModel(nil)
@@ -150,6 +173,7 @@ func (m *PRReviewPage) populateDiscussions() {
 			data.m.display.SetText(content)
 			data.m.display.Highlight("comment")
 			data.m.display.ScrollToHighlight()
+			data.m.selcomment = &data.c
 		}
 		return
 	})
@@ -316,6 +340,7 @@ func (m *PRReviewPage) populateCommits() {
 		data := node.GetReference().(*CommentThread)
 		m.display.SetRegions(false)
 		m.display.SetText(data.Content)
+		m.selcomment = data.Data
 		if data.HLID != "" {
 			m.display.SetRegions(true)
 			m.display.Highlight(data.HLID)
