@@ -4,22 +4,23 @@ import (
 	"context"
 	"fmt"
 	"git-forge/configset"
+	"git-forge/forge"
 
 	"github.com/google/go-github/v33/github"
 	//"gopkg.in/src-d/go-git.v4"
 	//"gopkg.in/src-d/go-git.v4/config"
 )
 
-func (f *GitHubForge) GetAllPrTitles() ([]string, []int64, error) {
+func (f *GitHubForge) GetAllPrTitles() ([]forge.PrTitle, error) {
 
 	cfg, err := gitconfigset.NewForgeConfigSet()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	defer cfg.CommitConfig()
 	fconfig, err := cfg.GetForgeRemoteSection()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	transport := &github.BasicAuthTransport{
@@ -35,17 +36,16 @@ func (f *GitHubForge) GetAllPrTitles() ([]string, []int64, error) {
 
 	prs, _, lerr := client.PullRequests.List(ctx, powner, pslug, PRList)
 	if lerr != nil {
-		return nil, nil, lerr
+		return nil, lerr
 	}
 
-	var titles []string = make([]string, 0)
-	var ids []int64 = make([]int64, 0)
+	var titles []forge.PrTitle = make([]forge.PrTitle, 0)
+
 	for _, pr := range prs {
-		titles = append(titles, *pr.Title)
-		ids = append(ids, *pr.ID)
+		titles = append(titles, forge.PrTitle{*pr.Title, *pr.ID})
 	}
 
-	return titles, ids, nil
+	return titles, nil
 
 }
 
