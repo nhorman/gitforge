@@ -95,3 +95,7 @@ func (f *DummyForge) GetAllPrTitles() ([]forge.PrTitle, error) {
 func (f *DummyForge) GetPr(idstring string) (*forge.PR, error) {
 	return nil, nil
 }
+
+func (f *DummyForge) RefreshPr(pr *forge.PR) (chan *forge.UpdatedPR, error) {
+	return nil, nil
+}
