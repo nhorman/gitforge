@@ -93,6 +93,20 @@ func (f *GitHubForge) GetPr(idstring string) (*forge.PR, error) {
 		Discussions: make([]forge.CommentData, 0),
 	}
 
+	comments, _, cerr := client.PullRequests.ListComments(ctx, powner, pslug, prnum, nil)
+	if cerr != nil {
+		return nil, cerr
+	}
+
+	for _, c := range comments {
+		newc := forge.CommentData{}
+		newc.Id = int(*c.ID)
+		newc.ParentId = int(*c.InReplyTo)
+		newc.Type = forge.GENERAL //TODO: Fix this
+		newc.Author = *c.User.Name
+		retpr.Discussions = append(retpr.Discussions, newc)
+	}
+
 	return &retpr, nil
 }
 
