@@ -93,17 +93,23 @@ func (f *GitHubForge) GetPr(idstring string) (*forge.PR, error) {
 		Discussions: make([]forge.CommentData, 0),
 	}
 
-	comments, _, cerr := client.PullRequests.ListComments(ctx, powner, pslug, prnum, nil)
-	if cerr != nil {
-		return nil, cerr
+	comments, _, ierr := client.Issues.ListComments(ctx, powner, pslug, prnum, nil)
+	if ierr != nil {
+		return nil, ierr
 	}
 
-	for _, c := range comments {
+	for i := 0; i < len(comments); i++ {
+		c := comments[i]
 		newc := forge.CommentData{}
 		newc.Id = int(*c.ID)
-		newc.ParentId = int(*c.InReplyTo)
-		newc.Type = forge.GENERAL //TODO: Fix this
-		newc.Author = *c.User.Name
+		newc.ParentId = 0         //Issue comments can't be nested
+		newc.Type = forge.GENERAL //Issue comments are our General comments
+		if c.User.Name != nil {
+			newc.Author = *c.User.Name
+		} else {
+			newc.Author = *c.User.Login
+		}
+		newc.Content = *c.Body
 		retpr.Discussions = append(retpr.Discussions, newc)
 	}
 
