@@ -113,6 +113,30 @@ func (f *GitHubForge) GetPr(idstring string) (*forge.PR, error) {
 		retpr.Discussions = append(retpr.Discussions, newc)
 	}
 
+	prc, _, perr := client.PullRequests.ListComments(ctx, powner, pslug, prnum, nil)
+	if perr != nil {
+		return nil, perr
+	}
+
+	for i := 0; i < len(prc); i++ {
+		c := prc[i]
+		newc := forge.CommentData{}
+		newc.Id = int(*c.ID)
+		if c.User.Name != nil {
+			newc.Author = *c.User.Name
+		} else {
+			newc.Author = *c.User.Login
+		}
+		if c.InReplyTo != nil {
+			newc.ParentId = int(*c.InReplyTo)
+		} else {
+			newc.ParentId = 0
+		}
+		newc.Type = forge.GENERAL //Issue comments are our General comments
+		newc.Content = *c.Body
+		retpr.Discussions = append(retpr.Discussions, newc)
+	}
+
 	return &retpr, nil
 }
 
