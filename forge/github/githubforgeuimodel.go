@@ -91,6 +91,7 @@ func (f *GitHubForge) GetPr(idstring string) (*forge.PR, error) {
 			},
 		},
 		Discussions: make([]forge.CommentData, 0),
+		Commits:     make([]forge.Commit, 0),
 	}
 
 	comments, _, ierr := client.Issues.ListComments(ctx, powner, pslug, prnum, nil)
@@ -118,24 +119,68 @@ func (f *GitHubForge) GetPr(idstring string) (*forge.PR, error) {
 		return nil, perr
 	}
 
-	for i := 0; i < len(prc); i++ {
-		c := prc[i]
-		newc := forge.CommentData{}
-		newc.Id = int(*c.ID)
-		if c.User.Name != nil {
-			newc.Author = *c.User.Name
-		} else {
-			newc.Author = *c.User.Login
-		}
-		if c.InReplyTo != nil {
-			newc.ParentId = int(*c.InReplyTo)
-		} else {
-			newc.ParentId = 0
-		}
-		newc.Type = forge.GENERAL //Issue comments are our General comments
-		newc.Content = *c.Body
-		retpr.Discussions = append(retpr.Discussions, newc)
+	commits, _, cmerr := client.PullRequests.ListCommits(ctx, powner, pslug, prnum, nil)
+	if cmerr != nil {
+		return nil, cmerr
 	}
+	for i := 0; i < len(commits); i++ {
+		c := commits[i]
+
+		newcommit := forge.Commit{}
+		newcommit.Comments = make([]forge.CommentData, 0)
+		newcommit.Hash = *c.SHA
+		for i := 0; i < len(prc); i++ {
+			cm := prc[i]
+			if *cm.CommitID != newcommit.Hash {
+				continue
+			}
+			newc := forge.CommentData{}
+			newc.Id = int(*cm.ID)
+			if cm.User.Name != nil {
+				newc.Author = *cm.User.Name
+			} else {
+				newc.Author = *cm.User.Login
+			}
+			if cm.InReplyTo != nil {
+				newc.ParentId = int(*cm.InReplyTo)
+			} else {
+				newc.ParentId = 0
+			}
+			newc.Type = forge.COMMIT //Review comments are our Inline comments
+			newc.Content = *cm.Body
+			newc.Path = *cm.Path
+			newc.Offset = *cm.OriginalPosition
+			newcommit.Comments = append(newcommit.Comments, newc)
+		}
+
+		retpr.Commits = append(retpr.Commits, newcommit)
+	}
+
+	//TODO - Reviews are associated with a commit, and so should be gathered
+	//prc, _, perr := client.PullRequests.ListComments(ctx, powner, pslug, prnum, nil)
+	//if perr != nil {
+	//	return nil, perr
+	//}
+
+	//as par of the commits list
+	//for i := 0; i < len(prc); i++ {
+	//		c := prc[i]
+	//		newc := forge.CommentData{}
+	//		newc.Id = int(*c.ID)
+	//		if c.User.Name != nil {
+	//			newc.Author = *c.User.Name
+	//		} else {
+	//			newc.Author = *c.User.Login
+	//		}
+	//		if c.InReplyTo != nil {
+	//			newc.ParentId = int(*c.InReplyTo)
+	//		} else {
+	//			newc.ParentId = 0
+	//		}
+	//		newc.Type = forge.GENERAL //Review comments are our Inline comments
+	//		newc.Content = *c.Body
+	//		retpr.Discussions = append(retpr.Discussions, newc)
+	//	}
 
 	return &retpr, nil
 }
