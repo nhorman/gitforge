@@ -265,5 +265,9 @@ func (f *ForgeUiModel) GetCommitData(hash string) string {
 }
 
 func (f *ForgeUiModel) PostComment(pr *forge.PR, oldcomment *forge.CommentData, response *forge.CommentData) error {
-	return nil
+	ret := f.Forge.PostComment(pr, oldcomment, response)
+	if ret != nil {
+		return ret
+	}
+	return f.RefreshPr(pr, func(pr *forge.PR, result *forge.UpdatedPR, data interface{}) {}, nil)
 }

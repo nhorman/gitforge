@@ -117,9 +117,13 @@ func (m *PRReviewPage) HandleComment(newcomment bool) {
 		oldcomment = nil
 	}
 	newcommentdata := &forge.CommentData{}
+	newcommentdata.Type = forge.GENERAL
 	newcommentdata.Content = string(responseText)
 	//TODO: Determine New comment type here based on oldcomment type?
-	model.PostComment(m.pr, oldcomment, newcommentdata)
+	ret := model.PostComment(m.pr, oldcomment, newcommentdata)
+	if ret != nil {
+		PopUpError(ret)
+	}
 }
 
 func (m *PRReviewPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {

@@ -37,6 +37,7 @@ type CommentData struct {
 	Content  string         `json:"content"`
 	Path     string         `json:"path"`
 	Offset   int            `json:"offset"`
+	Commit   string         `json:"commit,omitempty"` //Only used on PostComment
 }
 
 type Commit struct {
@@ -71,4 +72,5 @@ type UpdatedPR struct {
 type ForgeUIModel interface {
 	GetAllPrTitles() ([]PrTitle, error)
 	GetPr(idstring string) (*PR, error)
+	PostComment(pr *PR, oldcomment *CommentData, response *CommentData) error
 }

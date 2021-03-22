@@ -1,10 +1,13 @@
 package bitbucketforge
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"git-forge/configset"
 	"git-forge/forge"
 	"github.com/ktrysmt/go-bitbucket"
+	"net/http"
 	"time"
 )
 
@@ -146,4 +149,63 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 		return nil, commiterr
 	}
 	return &retpr, nil
+}
+
+type GenContent struct {
+	Raw string `json:"raw"`
+}
+
+type GenComment struct {
+	Content GenContent `json:"content"`
+}
+
+func (f *BitBucketForge) PostComment(pr *forge.PR, oldcomment *forge.CommentData, response *forge.CommentData) error {
+	//https://api.bitbucket.org/2.0/repositories/privafy/executor/pullrequests/13/comments
+
+	var urls = map[forge.DiscussionType]string{
+		forge.GENERAL: "https://%s/repositories/%s/%s/pullrequests/%d/comments",
+		forge.INLINE:  "",
+		forge.COMMIT:  "",
+	}
+
+	cfg, err := gitconfigset.NewForgeConfigSet()
+	if err != nil {
+		return err
+	}
+	defer cfg.CommitConfig()
+
+	fconfig, ferr := cfg.GetForgeRemoteSection()
+	if ferr != nil {
+		return fmt.Errorf("Forge config is busted: %s\n", ferr)
+	}
+
+	_, slug, owner, _ := getRepoSlugAndOwner(fconfig.Parent.Url)
+
+	var url string
+	payloadBuf := new(bytes.Buffer)
+	switch response.Type {
+	case forge.GENERAL:
+		newcomment := &GenComment{Content: GenContent{Raw: response.Content}}
+		url = fmt.Sprintf(urls[response.Type], f.cfg.ApiBaseUrl, owner, slug, pr.PrId)
+		json.NewEncoder(payloadBuf).Encode(newcomment)
+	default:
+		return fmt.Errorf("Not Implemented yet\n")
+	}
+
+	creq, cerr := http.NewRequest("POST", url, payloadBuf)
+	if cerr != nil {
+		return fmt.Errorf("Unable to Construct Comment URL: %s", cerr)
+	}
+	creq.SetBasicAuth(f.cfg.User, f.cfg.Pass)
+	creq.Header.Set("Content-Type", "application/json")
+	cresp, crerr := http.DefaultClient.Do(creq)
+	if crerr != nil {
+		return crerr
+	}
+	defer cresp.Body.Close()
+
+	if cresp.StatusCode != 200 {
+		return fmt.Errorf("Failed to Post comment, http response %s\n", cresp.Status)
+	}
+	return nil
 }
