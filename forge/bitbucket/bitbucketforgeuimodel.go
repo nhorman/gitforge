@@ -204,7 +204,7 @@ func (f *BitBucketForge) PostComment(pr *forge.PR, oldcomment *forge.CommentData
 	}
 	defer cresp.Body.Close()
 
-	if cresp.StatusCode != 200 {
+	if cresp.StatusCode != 200 && cresp.StatusCode != 201 {
 		return fmt.Errorf("Failed to Post comment, http response %s\n", cresp.Status)
 	}
 	return nil
