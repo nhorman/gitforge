@@ -71,5 +71,4 @@ type UpdatedPR struct {
 type ForgeUIModel interface {
 	GetAllPrTitles() ([]PrTitle, error)
 	GetPr(idstring string) (*PR, error)
-	RefreshPr(pr *PR) (chan *UpdatedPR, error)
 }

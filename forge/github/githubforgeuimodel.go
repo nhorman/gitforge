@@ -2,7 +2,6 @@ package githubforge
 
 import (
 	"context"
-	"fmt"
 	"git-forge/configset"
 	"git-forge/forge"
 	"strconv"
@@ -156,35 +155,5 @@ func (f *GitHubForge) GetPr(idstring string) (*forge.PR, error) {
 		retpr.Commits = append(retpr.Commits, newcommit)
 	}
 
-	//TODO - Reviews are associated with a commit, and so should be gathered
-	//prc, _, perr := client.PullRequests.ListComments(ctx, powner, pslug, prnum, nil)
-	//if perr != nil {
-	//	return nil, perr
-	//}
-
-	//as par of the commits list
-	//for i := 0; i < len(prc); i++ {
-	//		c := prc[i]
-	//		newc := forge.CommentData{}
-	//		newc.Id = int(*c.ID)
-	//		if c.User.Name != nil {
-	//			newc.Author = *c.User.Name
-	//		} else {
-	//			newc.Author = *c.User.Login
-	//		}
-	//		if c.InReplyTo != nil {
-	//			newc.ParentId = int(*c.InReplyTo)
-	//		} else {
-	//			newc.ParentId = 0
-	//		}
-	//		newc.Type = forge.GENERAL //Review comments are our Inline comments
-	//		newc.Content = *c.Body
-	//		retpr.Discussions = append(retpr.Discussions, newc)
-	//	}
-
 	return &retpr, nil
-}
-
-func (f *GitHubForge) RefreshPr(pr *forge.PR) (chan *forge.UpdatedPR, error) {
-	return nil, fmt.Errorf("Not Implemented Yet")
 }

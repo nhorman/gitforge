@@ -192,12 +192,30 @@ func (f *ForgeUiModel) GetPrInlineContent(pr *forge.PR, d *forge.CommentData) (s
 }
 
 func (f *ForgeUiModel) RefreshPr(pr *forge.PR, complete func(pr *forge.PR, result *forge.UpdatedPR, data interface{}), data interface{}) error {
-	schan, serr := f.Forge.RefreshPr(pr)
-	if serr != nil {
-		return serr
-	}
+	update := make(chan *forge.UpdatedPR)
 
-	go func(pr *forge.PR) {
+	go func(pr *forge.PR, update chan *forge.UpdatedPR) {
+		updateRes := forge.UpdatedPR{}
+		npr, nprerr := f.Forge.GetPr(strconv.FormatInt(pr.PrId, 10))
+		if nprerr != nil {
+			updateRes.Pr = nil
+			updateRes.Result = forge.UPDATE_FAILED
+			update <- &updateRes
+			return
+		}
+
+		if pr.CurrentToken == npr.CurrentToken {
+			updateRes.Pr = nil
+			updateRes.Result = forge.UPDATE_CURRENT
+		} else {
+			updateRes.Pr = npr
+			updateRes.Result = forge.UPDATE_REPULL
+		}
+		update <- &updateRes
+
+	}(pr, update)
+
+	go func(pr *forge.PR, schan chan *forge.UpdatedPR) {
 		retcode := <-schan
 		complete(pr, retcode, data)
 		switch retcode.Result {
@@ -216,7 +234,7 @@ func (f *ForgeUiModel) RefreshPr(pr *forge.PR, complete func(pr *forge.PR, resul
 		}
 		retcode.Result = forge.UPDATE_FINISHED
 		complete(pr, retcode, data)
-	}(pr)
+	}(pr, update)
 
 	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"git-forge/configset"
 	"git-forge/forge"
 	"github.com/ktrysmt/go-bitbucket"
-	"strconv"
 	"time"
 )
 
@@ -147,31 +146,4 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 		return nil, commiterr
 	}
 	return &retpr, nil
-}
-
-func (f *BitBucketForge) RefreshPr(pr *forge.PR) (chan *forge.UpdatedPR, error) {
-	update := make(chan *forge.UpdatedPR)
-	go func(pr *forge.PR) {
-		updateRes := forge.UpdatedPR{}
-
-		npr, nprerr := f.GetPr(strconv.FormatInt(pr.PrId, 10))
-		if nprerr != nil {
-			fmt.Printf("UNABLE TO GRAB PR AGAIN: %s\n", nprerr)
-			updateRes.Pr = nil
-			updateRes.Result = forge.UPDATE_FAILED
-			update <- &updateRes
-			return
-		}
-
-		if pr.CurrentToken == npr.CurrentToken {
-			updateRes.Pr = nil
-			updateRes.Result = forge.UPDATE_CURRENT
-		} else {
-			updateRes.Pr = npr
-			updateRes.Result = forge.UPDATE_REPULL
-		}
-		update <- &updateRes
-
-	}(pr)
-	return update, nil
 }
