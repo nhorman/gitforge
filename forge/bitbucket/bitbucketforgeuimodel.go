@@ -155,8 +155,20 @@ type GenContent struct {
 	Raw string `json:"raw"`
 }
 
+type GenCommit struct {
+	Hash string `json:"hash, omitempty"`
+}
+
+type CommitData struct {
+	To   int    `json:"to, omitempty"`
+	From int    `json:"from", omitempty"`
+	Path string `json:"path, omitempty"`
+}
+
 type GenComment struct {
-	Content GenContent `json:"content"`
+	Content    GenContent `json:"content"`
+	Commit     GenCommit  `json:"commit, omitempty"`
+	InlineData CommitData `json:"inline, omitemptry"`
 }
 
 func (f *BitBucketForge) PostComment(pr *forge.PR, oldcomment *forge.CommentData, response *forge.CommentData) error {
@@ -165,7 +177,7 @@ func (f *BitBucketForge) PostComment(pr *forge.PR, oldcomment *forge.CommentData
 	var urls = map[forge.DiscussionType]string{
 		forge.GENERAL: "https://%s/repositories/%s/%s/pullrequests/%d/comments",
 		forge.INLINE:  "",
-		forge.COMMIT:  "",
+		forge.COMMIT:  "https://%s/repositories/%s/%s/commit/%s/comments",
 	}
 
 	cfg, err := gitconfigset.NewForgeConfigSet()
@@ -187,6 +199,14 @@ func (f *BitBucketForge) PostComment(pr *forge.PR, oldcomment *forge.CommentData
 	case forge.GENERAL:
 		newcomment := &GenComment{Content: GenContent{Raw: response.Content}}
 		url = fmt.Sprintf(urls[response.Type], f.cfg.ApiBaseUrl, owner, slug, pr.PrId)
+		json.NewEncoder(payloadBuf).Encode(newcomment)
+	case forge.COMMIT:
+		newcomment := &GenComment{Content: GenContent{Raw: response.Content}}
+		newcomment.Commit.Hash = response.Commit
+		newcomment.InlineData.To = response.Offset
+		newcomment.InlineData.Path = response.Path
+
+		url = fmt.Sprintf(urls[response.Type], f.cfg.ApiBaseUrl, owner, slug, response.Commit)
 		json.NewEncoder(payloadBuf).Encode(newcomment)
 	default:
 		return fmt.Errorf("Not Implemented yet\n")
