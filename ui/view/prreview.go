@@ -16,9 +16,12 @@ import (
 )
 
 type PRReviewPage struct {
+	toprow      *tview.Flex
+	bottomrow   *tview.Flex
 	discussions *tview.TreeView
 	commits     *tview.TreeView
 	tdisplay    *tview.TextView
+	ldisplay    *tview.List
 	selcomment  *forge.CommentData
 	topflex     *tview.Flex
 	pr          *forge.PR
@@ -50,9 +53,13 @@ func NewPRReviewPage(a *tview.Application) WindowPage {
 	PRPage.commits.Box.SetBorder(true)
 	PRPage.tdisplay = tview.NewTextView()
 	PRPage.tdisplay.Box.SetBorder(true)
+	PRPage.ldisplay = tview.NewList()
+	PRPage.ldisplay.Box.SetBorder(true)
 	toprow.AddItem(PRPage.discussions, 0, 1, true)
 	toprow.AddItem(PRPage.commits, 0, 1, true)
 	bottomrow.AddItem(PRPage.tdisplay, 0, 1, true)
+	PRPage.toprow = toprow
+	PRPage.bottomrow = bottomrow
 	PRPage.app = a
 	PRPage.selcomment = nil
 	focusList = []tview.Primitive{PRPage.discussions, PRPage.commits, bottomrow}
@@ -166,6 +173,8 @@ func (m *PRReviewPage) populateDiscussions() {
 	m.discussions.SetTopLevel(1)
 	m.discussions.SetSelectedFunc(func(node *tview.TreeNode) {
 		data := node.GetReference().(*DiscussionId)
+		data.m.bottomrow.Clear()
+		data.m.bottomrow.AddItem(data.m.tdisplay, 0, 1, true)
 		if data.c.Type == forge.GENERAL {
 			data.m.tdisplay.SetRegions(false)
 			data.m.tdisplay.SetText(data.c.Content)
@@ -342,13 +351,26 @@ func (m *PRReviewPage) populateCommits() {
 
 	m.commits.SetSelectedFunc(func(node *tview.TreeNode) {
 		data := node.GetReference().(*CommentThread)
-		m.tdisplay.SetRegions(false)
-		m.tdisplay.SetText(data.Content)
-		m.selcomment = data.Data
 		if data.HLID != "" {
+			// existing comments display with the textview
+			//we don't need to worry about line numbers
+			m.bottomrow.Clear()
+			m.bottomrow.AddItem(m.tdisplay, 0, 1, true)
+			m.tdisplay.SetRegions(false)
+			m.tdisplay.SetText(data.Content)
+			m.selcomment = data.Data
 			m.tdisplay.SetRegions(true)
 			m.tdisplay.Highlight(data.HLID)
 			m.tdisplay.ScrollToHighlight()
+		} else {
+			//commits themselves are list views so
+			//we can select individual lines
+			m.bottomrow.Clear()
+			m.bottomrow.AddItem(m.ldisplay, 0, 1, true)
+			contentlines := strings.Split(data.Content, "\n")
+			for _, l := range contentlines {
+				m.ldisplay.AddItem(l, "", 0, nil)
+			}
 		}
 	})
 
