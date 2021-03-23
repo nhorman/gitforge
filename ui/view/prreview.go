@@ -368,8 +368,27 @@ func (m *PRReviewPage) populateCommits() {
 			m.bottomrow.Clear()
 			m.bottomrow.AddItem(m.ldisplay, 0, 1, true)
 			contentlines := strings.Split(data.Content, "\n")
+			var nextnum int = -1
+			var currentnum int = -1
 			for _, l := range contentlines {
-				m.ldisplay.AddItem(l, "", 0, nil)
+				if strings.HasPrefix(l, "@@") == true {
+					//This is a diff line, so we can update
+					//our line number
+					litems := strings.Split(l, " ")
+					loffsetgroup := strings.Split(litems[2], ",")
+					loffset := strings.TrimLeft(loffsetgroup[0], "+")
+					nextnum, _ = strconv.Atoi(loffset)
+					currentnum = -1
+				}
+				if currentnum > 0 {
+					m.ldisplay.AddItem("("+strconv.Itoa(currentnum)+") "+l, "", 0, nil)
+				} else {
+					numstring := strconv.Itoa(nextnum)
+					space := strings.Repeat(" ", len(numstring))
+					m.ldisplay.AddItem(space+l, "", 0, nil)
+				}
+				currentnum = nextnum
+				nextnum = nextnum + 1
 			}
 		}
 	})
