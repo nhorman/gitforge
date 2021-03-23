@@ -141,9 +141,11 @@ func (m *PRReviewPage) HandleComment(newcomment bool) {
 	newcommentdata.Type = forge.GENERAL
 	newcommentdata.Content = string(responseText)
 	if m.displaylist == true {
+		newcommentdata.Type = forge.COMMIT
 		stringinfo := strings.Split(pathlinestring, ":")
-		newcommentdata.Path = stringinfo[0]
-		newcommentdata.Offset, _ = strconv.Atoi(stringinfo[1])
+		newcommentdata.Commit = stringinfo[0]
+		newcommentdata.Path = stringinfo[1]
+		newcommentdata.Offset, _ = strconv.Atoi(stringinfo[2])
 	}
 
 	//TODO: Determine New comment type here based on oldcomment type?
@@ -377,6 +379,7 @@ func (m *PRReviewPage) populateCommits() {
 			//we don't need to worry about line numbers
 			m.bottomrow.Clear()
 			m.bottomrow.AddItem(m.tdisplay, 0, 1, true)
+			m.tdisplay.Clear()
 			m.displaylist = false
 			m.tdisplay.SetRegions(false)
 			m.tdisplay.SetText(data.Content)
@@ -389,6 +392,7 @@ func (m *PRReviewPage) populateCommits() {
 			//we can select individual lines
 			m.bottomrow.Clear()
 			m.bottomrow.AddItem(m.ldisplay, 0, 1, true)
+			m.ldisplay.Clear()
 			m.displaylist = true
 			contentlines := strings.Split(data.Content, "\n")
 			var nextnum int = -1
@@ -407,14 +411,19 @@ func (m *PRReviewPage) populateCommits() {
 					//This is a diff line, so we can update
 					//our line number
 					litems := strings.Split(l, " ")
-					loffsetgroup := strings.Split(litems[2], ",")
+					var loffsetgroup []string
+					if strings.HasPrefix(l, "@@@") == true {
+						loffsetgroup = strings.Split(litems[3], ",")
+					} else {
+						loffsetgroup = strings.Split(litems[2], ",")
+					}
 					loffset := strings.TrimLeft(loffsetgroup[0], "+")
 					nextnum, _ = strconv.Atoi(loffset)
 					currentnum = -1
 					linestate = 1
 				}
 				if linestate > 1 {
-					m.ldisplay.AddItem("("+strconv.Itoa(currentnum)+") "+l, commitpath+":"+strconv.Itoa(currentnum), 0, nil)
+					m.ldisplay.AddItem("("+strconv.Itoa(currentnum)+") "+l, data.Hash+":"+commitpath+":"+strconv.Itoa(currentnum), 0, nil)
 					m.ldisplay.ShowSecondaryText(false)
 				} else {
 					numstring := strconv.Itoa(nextnum)
