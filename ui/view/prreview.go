@@ -18,7 +18,7 @@ import (
 type PRReviewPage struct {
 	discussions *tview.TreeView
 	commits     *tview.TreeView
-	display     *tview.TextView
+	tdisplay    *tview.TextView
 	selcomment  *forge.CommentData
 	topflex     *tview.Flex
 	pr          *forge.PR
@@ -48,14 +48,14 @@ func NewPRReviewPage(a *tview.Application) WindowPage {
 	PRPage.commits = tview.NewTreeView()
 	PRPage.commits.Box.SetTitle("Commits")
 	PRPage.commits.Box.SetBorder(true)
-	PRPage.display = tview.NewTextView()
-	PRPage.display.Box.SetBorder(true)
+	PRPage.tdisplay = tview.NewTextView()
+	PRPage.tdisplay.Box.SetBorder(true)
 	toprow.AddItem(PRPage.discussions, 0, 1, true)
 	toprow.AddItem(PRPage.commits, 0, 1, true)
-	bottomrow.AddItem(PRPage.display, 0, 1, true)
+	bottomrow.AddItem(PRPage.tdisplay, 0, 1, true)
 	PRPage.app = a
 	PRPage.selcomment = nil
-	focusList = []tview.Primitive{PRPage.discussions, PRPage.commits, PRPage.display}
+	focusList = []tview.Primitive{PRPage.discussions, PRPage.commits, PRPage.tdisplay}
 
 	return &PRPage
 }
@@ -78,7 +78,7 @@ func (m *PRReviewPage) HandleComment(newcomment bool) {
 	var commentname string = ""
 	var oldcomment *forge.CommentData = m.selcomment
 
-	respcomment := m.display.GetText(true)
+	respcomment := m.tdisplay.GetText(true)
 	comment, err = ioutil.TempFile("", "GITFORGE")
 	if err != nil {
 		PopUpError(err)
@@ -167,16 +167,16 @@ func (m *PRReviewPage) populateDiscussions() {
 	m.discussions.SetSelectedFunc(func(node *tview.TreeNode) {
 		data := node.GetReference().(*DiscussionId)
 		if data.c.Type == forge.GENERAL {
-			data.m.display.SetRegions(false)
-			data.m.display.SetText(data.c.Content)
+			data.m.tdisplay.SetRegions(false)
+			data.m.tdisplay.SetText(data.c.Content)
 			data.m.selcomment = &data.c
 		} else if data.c.Type == forge.INLINE {
-			data.m.display.SetRegions(true)
+			data.m.tdisplay.SetRegions(true)
 			model, _ := forgemodel.GetUiModel(nil)
 			content, _ := model.GetPrInlineContent(data.m.pr, &data.c)
-			data.m.display.SetText(content)
-			data.m.display.Highlight("comment")
-			data.m.display.ScrollToHighlight()
+			data.m.tdisplay.SetText(content)
+			data.m.tdisplay.Highlight("comment")
+			data.m.tdisplay.ScrollToHighlight()
 			data.m.selcomment = &data.c
 		}
 		return
@@ -342,13 +342,13 @@ func (m *PRReviewPage) populateCommits() {
 
 	m.commits.SetSelectedFunc(func(node *tview.TreeNode) {
 		data := node.GetReference().(*CommentThread)
-		m.display.SetRegions(false)
-		m.display.SetText(data.Content)
+		m.tdisplay.SetRegions(false)
+		m.tdisplay.SetText(data.Content)
 		m.selcomment = data.Data
 		if data.HLID != "" {
-			m.display.SetRegions(true)
-			m.display.Highlight(data.HLID)
-			m.display.ScrollToHighlight()
+			m.tdisplay.SetRegions(true)
+			m.tdisplay.Highlight(data.HLID)
+			m.tdisplay.ScrollToHighlight()
 		}
 	})
 
@@ -371,8 +371,8 @@ func (m *PRReviewPage) populateCommits() {
 }
 
 func (m *PRReviewPage) PagePreDisplay() {
-	m.display.Box.SetTitle("Discussions for PR " + strconv.FormatInt(m.pr.PrId, 10) + ": " + m.pr.Title)
-	m.display.Clear()
+	m.tdisplay.Box.SetTitle("Discussions for PR " + strconv.FormatInt(m.pr.PrId, 10) + ": " + m.pr.Title)
+	m.tdisplay.Clear()
 	focusidx = 0
 	m.app.SetFocus(focusList[focusidx])
 	m.populateDiscussions()
