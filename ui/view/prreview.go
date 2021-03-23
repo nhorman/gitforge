@@ -370,7 +370,16 @@ func (m *PRReviewPage) populateCommits() {
 			contentlines := strings.Split(data.Content, "\n")
 			var nextnum int = -1
 			var currentnum int = -1
+			var commitpath string = ""
+			var linestate int = 0
 			for _, l := range contentlines {
+				if strings.HasPrefix(l, "diff --git") == true {
+					diffline := strings.Split(l, " ")
+					commitpath = strings.TrimLeft(diffline[3], "b/")
+					currentnum = -1
+					linestate = 0
+				}
+
 				if strings.HasPrefix(l, "@@") == true {
 					//This is a diff line, so we can update
 					//our line number
@@ -379,16 +388,22 @@ func (m *PRReviewPage) populateCommits() {
 					loffset := strings.TrimLeft(loffsetgroup[0], "+")
 					nextnum, _ = strconv.Atoi(loffset)
 					currentnum = -1
+					linestate = 1
 				}
-				if currentnum > 0 {
-					m.ldisplay.AddItem("("+strconv.Itoa(currentnum)+") "+l, "", 0, nil)
+				if linestate > 1 {
+					m.ldisplay.AddItem("("+strconv.Itoa(currentnum)+") "+l, commitpath+":"+strconv.Itoa(currentnum), 0, nil)
+					m.ldisplay.ShowSecondaryText(false)
 				} else {
 					numstring := strconv.Itoa(nextnum)
 					space := strings.Repeat(" ", len(numstring))
 					m.ldisplay.AddItem(space+l, "", 0, nil)
+					m.ldisplay.ShowSecondaryText(false)
 				}
 				currentnum = nextnum
 				nextnum = nextnum + 1
+				if linestate == 1 {
+					linestate = 2
+				}
 			}
 		}
 	})
