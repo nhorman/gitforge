@@ -22,6 +22,7 @@ type PRReviewPage struct {
 	commits     *tview.TreeView
 	tdisplay    *tview.TextView
 	ldisplay    *tview.List
+	displaylist bool
 	selcomment  *forge.CommentData
 	topflex     *tview.Flex
 	pr          *forge.PR
@@ -55,6 +56,7 @@ func NewPRReviewPage(a *tview.Application) WindowPage {
 	PRPage.tdisplay.Box.SetBorder(true)
 	PRPage.ldisplay = tview.NewList()
 	PRPage.ldisplay.Box.SetBorder(true)
+	PRPage.displaylist = false
 	toprow.AddItem(PRPage.discussions, 0, 1, true)
 	toprow.AddItem(PRPage.commits, 0, 1, true)
 	bottomrow.AddItem(PRPage.tdisplay, 0, 1, true)
@@ -84,8 +86,20 @@ func (m *PRReviewPage) HandleComment(newcomment bool) {
 	var err error
 	var commentname string = ""
 	var oldcomment *forge.CommentData = m.selcomment
-
-	respcomment := m.tdisplay.GetText(true)
+	var respcomment string = ""
+	var pathlinestring string = ""
+	if m.displaylist == true {
+		itemidx := m.ldisplay.GetCurrentItem()
+		var lines []string = make([]string, 0)
+		for i := itemidx - 3; i > 0 && i < itemidx; i++ {
+			newline, _ := m.ldisplay.GetItemText(i)
+			lines = append(lines, newline)
+		}
+		respcomment = strings.Join(lines, "\n")
+		_, pathlinestring = m.ldisplay.GetItemText(itemidx)
+	} else {
+		respcomment = m.tdisplay.GetText(true)
+	}
 	comment, err = ioutil.TempFile("", "GITFORGE")
 	if err != nil {
 		PopUpError(err)
@@ -126,6 +140,12 @@ func (m *PRReviewPage) HandleComment(newcomment bool) {
 	newcommentdata := &forge.CommentData{}
 	newcommentdata.Type = forge.GENERAL
 	newcommentdata.Content = string(responseText)
+	if m.displaylist == true {
+		stringinfo := strings.Split(pathlinestring, ":")
+		newcommentdata.Path = stringinfo[0]
+		newcommentdata.Offset, _ = strconv.Atoi(stringinfo[1])
+	}
+
 	//TODO: Determine New comment type here based on oldcomment type?
 	ret := model.PostComment(m.pr, oldcomment, newcommentdata)
 	if ret != nil {
@@ -175,6 +195,7 @@ func (m *PRReviewPage) populateDiscussions() {
 		data := node.GetReference().(*DiscussionId)
 		data.m.bottomrow.Clear()
 		data.m.bottomrow.AddItem(data.m.tdisplay, 0, 1, true)
+		data.m.displaylist = false
 		if data.c.Type == forge.GENERAL {
 			data.m.tdisplay.SetRegions(false)
 			data.m.tdisplay.SetText(data.c.Content)
@@ -356,6 +377,7 @@ func (m *PRReviewPage) populateCommits() {
 			//we don't need to worry about line numbers
 			m.bottomrow.Clear()
 			m.bottomrow.AddItem(m.tdisplay, 0, 1, true)
+			m.displaylist = false
 			m.tdisplay.SetRegions(false)
 			m.tdisplay.SetText(data.Content)
 			m.selcomment = data.Data
@@ -367,6 +389,7 @@ func (m *PRReviewPage) populateCommits() {
 			//we can select individual lines
 			m.bottomrow.Clear()
 			m.bottomrow.AddItem(m.ldisplay, 0, 1, true)
+			m.displaylist = true
 			contentlines := strings.Split(data.Content, "\n")
 			var nextnum int = -1
 			var currentnum int = -1
