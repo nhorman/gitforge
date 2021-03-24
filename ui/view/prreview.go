@@ -161,7 +161,7 @@ func (m *PRReviewPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 	case "Rune[h]":
 		helpwindow, _ := GetPage("help")
 		helpwindow.SetPageInfo([]string{"H - This window",
-			"Tab - Move between Discussion and Commit Pane",
+			"Tab - Move between Discussion/Commit/Display Pane",
 			"C - Start a new comment thread",
 			"R - Respond To selected Comment",
 			"Q - Back up to main window"})
