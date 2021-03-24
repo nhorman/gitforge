@@ -155,10 +155,6 @@ type GenContent struct {
 	Raw string `json:"raw"`
 }
 
-type GenCommit struct {
-	Hash string `json:"hash, omitempty"`
-}
-
 type CommitData struct {
 	To   int    `json:"to, omitempty"`
 	From int    `json:"from", omitempty"`
@@ -167,7 +163,6 @@ type CommitData struct {
 
 type GenComment struct {
 	Content    GenContent `json:"content"`
-	Commit     GenCommit  `json:"commit, omitempty"`
 	InlineData CommitData `json:"inline, omitemptry"`
 }
 
@@ -202,7 +197,6 @@ func (f *BitBucketForge) PostComment(pr *forge.PR, oldcomment *forge.CommentData
 		json.NewEncoder(payloadBuf).Encode(newcomment)
 	case forge.COMMIT:
 		newcomment := &GenComment{Content: GenContent{Raw: response.Content}}
-		newcomment.Commit.Hash = response.Commit
 		newcomment.InlineData.To = response.Offset
 		newcomment.InlineData.Path = response.Path
 
