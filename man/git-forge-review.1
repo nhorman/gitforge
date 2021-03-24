@@ -1,0 +1,87 @@
+.de Sh \" Subsection
+.br
+.if t .Sp
+.ne 5
+.PP
+\fB\\$1\fR
+.PP
+..
+.de Sp \" Vertical space (when we can't use .PP)
+.if t .sp .5v
+.if n .sp
+..
+.de Ip \" List item
+.br
+.ie \\n(.$>=3 .ne \\$3
+.el .ne 3
+.IP "\\$1" \\$2
+..
+.TH "git-forge-review" 1 "Jan 2021" "Linux" "git-forge-review"
+.SH NAME
+git-forge-review \- Start the git forge review text user interface
+.SH "SYNOPSIS"
+
+.nf
+\fBgit forge review [options]\fR
+.fi
+
+.SH "DESCRIPTION"
+
+.PP
+Start the review text user interface, allowing a user to, from the terminal
+interact with a forges review system.
+
+.SH "USAGE"
+.TP
+.SS git forge review [options]
+
+Note that, being a UI, the review window will have command keys that are
+sensitive to the context that they are used.  Pressing the 'h' or 'H' key in any
+window will bring up a help screen with navigaional aids
+
+.TP
+.I Options
+
+.TP
+.B -h 
+Display help text
+
+.TP
+.B -logfile <filename>
+Redirect log messages to the specified file
+
+.SH "REVIEW UI PRESENTATION MODEL"
+The review UI consists of the following screens:
+
+.TP
+.SS
+The Main window
+
+This window presents a list of Pull requests and issues that are being 'watched'
+by the user.  Pressing the 'p' or 'i' keys brings up a list of all prs/issues
+for the given project, selecting 'w' on an issue or pr causes it to be watches,
+meaning the review ui, fetches the pr/issue metadata from the forge along with
+any relevant branches, and stores the metadata in a common json format as a git
+note on said branch
+
+.TP
+.SS
+The PR Review window
+This window consists of 3 panes, a discussion pane, showing general pr
+discussions, a commit pane, showing any commits for the pr, and associated
+discussion threads attached to chunks in that commit, and a display pane,
+displaying the selected commit/discussion.  'Tab' cycles focus through the
+panes.  Selecting 'R' on a given discussion thread opens an editor to reply to
+that comment, while selecting 'C' allows for a new comment thread to be started,
+either as a discussion or attached to a chunk in a comment
+
+.SH
+ENVIRONMENT VARIABLES
+
+.TP
+.SS
+GITFORGE_EDITOR
+This points to an editor to execute when creating/replying to a comment.  The
+execution format is $GITFORGE_EDITOR <newcomment file> <comment being replied to
+file>
+
