@@ -85,6 +85,13 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 			BranchName: pullrequest.Destination.Branch.Name,
 		},
 	}
+	for i := 0; i < len(pullrequest.Participants); i++ {
+		p := pullrequest.Participants[i]
+		if p.Approved == true {
+			newapprover := forge.Approver{Name: p.User.DisplayName}
+			retpr.Approvals = append(retpr.Approvals, newapprover)
+		}
+	}
 
 	commenterr := GetAllPrCommentsFromBitBucket(f.cfg.ApiBaseUrl, owner, slug, f.cfg.User, f.cfg.Pass, idstring, func(comments *PRComments, data interface{}) {
 		myretpr := data.(*forge.PR)

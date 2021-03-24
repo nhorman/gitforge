@@ -16,6 +16,32 @@ type LinkTuple struct {
 	Type   string `json:"type,omitempty"`
 }
 
+type Participant struct {
+	ParticipatedOn time.Time `json:"participated_on"`
+	State          string    `json:"state"`
+	Role           string    `json:"role"`
+	User           struct {
+		DisplayName string `json:"display_name"`
+		UUID        string `json:"uuid"`
+		Links       struct {
+			Self struct {
+				Href string `json:"href"`
+			} `json:"self"`
+			HTML struct {
+				Href string `json:"href"`
+			} `json:"html"`
+			Avatar struct {
+				Href string `json:"href"`
+			} `json:"avatar"`
+		} `json:"links"`
+		Nickname  string `json:"nickname"`
+		Type      string `json:"type"`
+		AccountID string `json:"account_id"`
+	} `json:"user"`
+	Type     string `json:"type"`
+	Approved bool   `json:"approved"`
+}
+
 type PullRequest struct {
 	Rendered struct {
 		Description LinkTuple `json: "description"`
@@ -94,7 +120,7 @@ type PullRequest struct {
 	CommentCount int           `json:"comment_count"`
 	State        string        `json:"state"`
 	TaskCount    int           `json:"task_count"`
-	Participants []interface{} `json:"participants"`
+	Participants []Participant `json:"participants"`
 	Reason       string        `json:"reason"`
 	UpdatedOn    time.Time     `json:"updated_on"`
 	Author       struct {

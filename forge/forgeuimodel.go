@@ -45,19 +45,19 @@ type Commit struct {
 	Comments []CommentData `json:"comments"`
 }
 
-type ApprovalData struct {
-	Approver string `json:"approver"`
+type Approver struct {
+	Name string `json:"approver"`
 }
 
 type PR struct {
-	Unread       bool           `json:"unread"`
-	PrId         int64          `json:"prid"`
-	CurrentToken string         `json:"currenttoken"`
-	Title        string         `json:"title"`
-	PullSpec     PrSpec         `json:"prspec"`
-	Approvals    []ApprovalData `json:"approvals"`
-	Discussions  []CommentData  `json:"discussions"`
-	Commits      []Commit       `json:"commits"`
+	Unread       bool          `json:"unread"`
+	PrId         int64         `json:"prid"`
+	CurrentToken string        `json:"currenttoken"`
+	Title        string        `json:"title"`
+	PullSpec     PrSpec        `json:"prspec"`
+	Approvals    []Approver    `json:"approvals"`
+	Discussions  []CommentData `json:"discussions"`
+	Commits      []Commit      `json:"commits"`
 }
 
 type UpdateResult int
@@ -83,7 +83,7 @@ type ForgeUIModel interface {
 func NewPR() PR {
 	return PR{
 		Unread:      true,
-		Approvals:   make([]ApprovalData, 0),
+		Approvals:   make([]Approver, 0),
 		Discussions: make([]CommentData, 0),
 		Commits:     make([]Commit, 0),
 	}
