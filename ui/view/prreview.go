@@ -314,7 +314,9 @@ func insertThreadIntoCommit(commit string, threadcontent string, t *CommentThrea
 	outputcontent := make([]string, 0)
 	outputcontent = append(outputcontent, commitlines[0:idx]...)
 	outputcontent = append(outputcontent, threadcontent)
-	outputcontent = append(outputcontent, commitlines[idx+1:]...)
+	if idx < len(commitlines) {
+		outputcontent = append(outputcontent, commitlines[idx+1:]...)
+	}
 
 	return strings.Join(outputcontent, "\n")
 
