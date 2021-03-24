@@ -27,11 +27,17 @@ func ReviewUsage() {
 func ReviewCmd() error {
 
 	helpopt := flag.Bool("help", false, "display help for createpr command")
+	logfileopt := flag.String("logfile", "", "Redirect log messages to file")
+
 	flag.Parse()
 
 	if *helpopt == true {
 		CreatePrusage()
 		return nil
+	}
+
+	if *logfileopt != "" {
+		logging.LogToFile(*logfileopt)
 	}
 
 	myforge, err := AllocateForge()
