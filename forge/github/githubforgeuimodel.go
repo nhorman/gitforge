@@ -74,23 +74,19 @@ func (f *GitHubForge) GetPr(idstring string) (*forge.PR, error) {
 		return nil, perr
 	}
 
-	retpr := forge.PR{
-		Unread:       true,
-		CurrentToken: pr.UpdatedAt.Format(time.UnixDate),
-		Title:        *pr.Title,
-		PrId:         int64(*pr.Number),
-		PullSpec: forge.PrSpec{
-			Source: forge.PrRemote{
-				URL:        *pr.Head.Repo.GitURL,
-				BranchName: *pr.Head.Ref,
-			},
-			Target: forge.PrRemote{
-				URL:        *pr.Base.Repo.GitURL,
-				BranchName: *pr.Base.Ref,
-			},
+	retpr := forge.NewPR()
+	retpr.CurrentToken = pr.UpdatedAt.Format(time.UnixDate)
+	retpr.Title = *pr.Title
+	retpr.PrId = int64(*pr.Number)
+	retpr.PullSpec = forge.PrSpec{
+		Source: forge.PrRemote{
+			URL:        *pr.Head.Repo.GitURL,
+			BranchName: *pr.Head.Ref,
 		},
-		Discussions: make([]forge.CommentData, 0),
-		Commits:     make([]forge.Commit, 0),
+		Target: forge.PrRemote{
+			URL:        *pr.Base.Repo.GitURL,
+			BranchName: *pr.Base.Ref,
+		},
 	}
 
 	comments, _, ierr := client.Issues.ListComments(ctx, powner, pslug, prnum, nil)

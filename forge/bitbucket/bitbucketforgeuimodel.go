@@ -71,22 +71,19 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 		return nil, err
 	}
 
-	retpr := forge.PR{
-		Unread:       true,
-		CurrentToken: pullrequest.UpdatedOn.Format(time.UnixDate),
-		Title:        pullrequest.Title,
-		PrId:         int64(pullrequest.ID),
-		PullSpec: forge.PrSpec{
-			Source: forge.PrRemote{
-				URL:        pullrequest.Source.Repository.Links.HTML.Href,
-				BranchName: pullrequest.Source.Branch.Name,
-			},
-			Target: forge.PrRemote{
-				URL:        pullrequest.Destination.Repository.Links.HTML.Href,
-				BranchName: pullrequest.Destination.Branch.Name,
-			},
+	retpr := forge.NewPR()
+	retpr.CurrentToken = pullrequest.UpdatedOn.Format(time.UnixDate)
+	retpr.Title = pullrequest.Title
+	retpr.PrId = int64(pullrequest.ID)
+	retpr.PullSpec = forge.PrSpec{
+		Source: forge.PrRemote{
+			URL:        pullrequest.Source.Repository.Links.HTML.Href,
+			BranchName: pullrequest.Source.Branch.Name,
 		},
-		Discussions: make([]forge.CommentData, 0),
+		Target: forge.PrRemote{
+			URL:        pullrequest.Destination.Repository.Links.HTML.Href,
+			BranchName: pullrequest.Destination.Branch.Name,
+		},
 	}
 
 	commenterr := GetAllPrCommentsFromBitBucket(f.cfg.ApiBaseUrl, owner, slug, f.cfg.User, f.cfg.Pass, idstring, func(comments *PRComments, data interface{}) {
@@ -118,7 +115,6 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 
 	commiterr := GetAllPrCommitsFromBitBucket(f.cfg.ApiBaseUrl, owner, slug, f.cfg.User, f.cfg.Pass, idstring, func(commits *PRCommits, data interface{}) {
 		myretpr := data.(*forge.PR)
-		myretpr.Commits = make([]forge.Commit, 0)
 		for i := 0; i < len(commits.Values); i++ {
 			c := commits.Values[i]
 			newcommit := forge.Commit{}

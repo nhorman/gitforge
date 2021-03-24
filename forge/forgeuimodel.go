@@ -45,14 +45,19 @@ type Commit struct {
 	Comments []CommentData `json:"comments"`
 }
 
+type ApprovalData struct {
+	Approver string `json:"approver"`
+}
+
 type PR struct {
-	Unread       bool          `json:"unread"`
-	PrId         int64         `json:"prid"`
-	CurrentToken string        `json:"currenttoken"`
-	Title        string        `json:"title"`
-	PullSpec     PrSpec        `json:"prspec"`
-	Discussions  []CommentData `json:"discussions"`
-	Commits      []Commit      `json:"commits"`
+	Unread       bool           `json:"unread"`
+	PrId         int64          `json:"prid"`
+	CurrentToken string         `json:"currenttoken"`
+	Title        string         `json:"title"`
+	PullSpec     PrSpec         `json:"prspec"`
+	Approvals    []ApprovalData `json:"approvals"`
+	Discussions  []CommentData  `json:"discussions"`
+	Commits      []Commit       `json:"commits"`
 }
 
 type UpdateResult int
@@ -73,4 +78,13 @@ type ForgeUIModel interface {
 	GetAllPrTitles() ([]PrTitle, error)
 	GetPr(idstring string) (*PR, error)
 	PostComment(pr *PR, oldcomment *CommentData, response *CommentData) error
+}
+
+func NewPR() PR {
+	return PR{
+		Unread:      true,
+		Approvals:   make([]ApprovalData, 0),
+		Discussions: make([]CommentData, 0),
+		Commits:     make([]Commit, 0),
+	}
 }
