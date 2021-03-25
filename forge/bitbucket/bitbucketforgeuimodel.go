@@ -227,3 +227,36 @@ func (f *BitBucketForge) PostComment(pr *forge.PR, oldcomment *forge.CommentData
 	}
 	return nil
 }
+
+func (f *BitBucketForge) ApprovePR(pr *forge.PR) error {
+	cfg, err := gitconfigset.NewForgeConfigSet()
+	if err != nil {
+		return err
+	}
+	defer cfg.CommitConfig()
+
+	fconfig, ferr := cfg.GetForgeRemoteSection()
+	if ferr != nil {
+		return fmt.Errorf("Forge config is busted: %s\n", ferr)
+	}
+
+	_, slug, owner, _ := getRepoSlugAndOwner(fconfig.Parent.Url)
+
+	url := fmt.Sprintf("https://%s/repositories/%s/%s/pullrequests/%d/approve", f.cfg.ApiBaseUrl, owner, slug, pr.PrId)
+
+	creq, cerr := http.NewRequest("POST", url, nil)
+	if cerr != nil {
+		return fmt.Errorf("Unable to Construct Approval URL: %s", cerr)
+	}
+	creq.SetBasicAuth(f.cfg.User, f.cfg.Pass)
+	cresp, crerr := http.DefaultClient.Do(creq)
+	if crerr != nil {
+		return crerr
+	}
+	defer cresp.Body.Close()
+	if cresp.StatusCode != 204 {
+		return fmt.Errorf("Approval Failed, server retured error %d\n", cresp.StatusCode)
+	}
+
+	return nil
+}

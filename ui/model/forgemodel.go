@@ -28,6 +28,7 @@ type ForgeUiOpts interface {
 	GetCommit(hash string)
 	GetCommitData(hash string)
 	PostComment(pr *forge.PR, oldcomment *forge.CommentData, response *forge.CommentData) error
+	ApprovePR(pr *forge.PR) error
 }
 
 func NewUiModel(forge forge.ForgeUIModel) (*ForgeUiModel, error) {
@@ -270,4 +271,13 @@ func (f *ForgeUiModel) PostComment(pr *forge.PR, oldcomment *forge.CommentData, 
 		return ret
 	}
 	return f.RefreshPr(pr, func(pr *forge.PR, result *forge.UpdatedPR, data interface{}) {}, nil)
+}
+
+func (f *ForgeUiModel) ApprovePR(pr *forge.PR) error {
+	ret := f.Forge.ApprovePR(pr)
+	if ret != nil {
+		return ret
+	}
+	return f.RefreshPr(pr, func(pr *forge.PR, result *forge.UpdatedPR, data interface{}) {}, nil)
+	return nil
 }

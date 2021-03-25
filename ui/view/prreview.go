@@ -186,10 +186,14 @@ func (m *PRReviewPage) HandleComment(newcomment bool) {
 func (m *PRReviewPage) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 	runekey := event.Name()
 	switch runekey {
+	case "Rune[a]":
+		model, _ := forgemodel.GetUiModel(nil)
+		model.ApprovePR(m.pr)
 	case "Rune[h]":
 		helpwindow, _ := GetPage("help")
 		helpwindow.SetPageInfo([]string{"H - This window",
 			"Tab - Move between Discussion/Commit/Display Pane",
+			"A - Toggle Approval status for this PR",
 			"C - Start a new comment thread",
 			"R - Respond To selected Comment",
 			"Q - Back up to main window"})

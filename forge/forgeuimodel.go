@@ -87,6 +87,7 @@ type ForgeUIModel interface {
 	GetAllPrTitles() ([]PrTitle, error)
 	GetPr(idstring string) (*PR, error)
 	PostComment(pr *PR, oldcomment *CommentData, response *CommentData) error
+	ApprovePR(pr *PR) error
 }
 
 func NewPR() PR {
