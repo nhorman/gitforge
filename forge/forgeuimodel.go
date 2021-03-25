@@ -49,12 +49,21 @@ type Approver struct {
 	Name string `json:"approver"`
 }
 
+type ApprovedState int
+
+const (
+	UNKNOWN    ApprovedState = iota
+	UNAPPROVED ApprovedState = iota
+	APPROVED   ApprovedState = iota
+)
+
 type PR struct {
 	Unread       bool          `json:"unread"`
 	PrId         int64         `json:"prid"`
 	CurrentToken string        `json:"currenttoken"`
 	Title        string        `json:"title"`
 	PullSpec     PrSpec        `json:"prspec"`
+	Approved     ApprovedState `json:"approved"`
 	Approvals    []Approver    `json:"approvals"`
 	Discussions  []CommentData `json:"discussions"`
 	Commits      []Commit      `json:"commits"`

@@ -75,6 +75,7 @@ func (f *BitBucketForge) GetPr(idstring string) (*forge.PR, error) {
 	retpr.CurrentToken = pullrequest.UpdatedOn.Format(time.UnixDate)
 	retpr.Title = pullrequest.Title
 	retpr.PrId = int64(pullrequest.ID)
+	retpr.Approved = forge.UNKNOWN
 	retpr.PullSpec = forge.PrSpec{
 		Source: forge.PrRemote{
 			URL:        pullrequest.Source.Repository.Links.HTML.Href,

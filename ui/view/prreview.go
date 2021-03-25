@@ -15,9 +15,29 @@ import (
 	"strings"
 )
 
+type StatusItems struct {
+	approved  *tview.TextView
+	rows      *tview.Flex
+	toprow    *tview.Flex
+	bottomrow *tview.Flex
+}
+
+func NewStatusArea() *StatusItems {
+	newstatus := StatusItems{}
+	newstatus.rows = tview.NewFlex().SetDirection(tview.FlexRow)
+	newstatus.toprow = tview.NewFlex().SetDirection(tview.FlexColumn)
+	newstatus.bottomrow = tview.NewFlex().SetDirection(tview.FlexColumn)
+	newstatus.rows.AddItem(newstatus.toprow, 0, 1, true)
+	newstatus.rows.AddItem(newstatus.bottomrow, 0, 1, true)
+	newstatus.approved = tview.NewTextView()
+	newstatus.toprow.AddItem(newstatus.approved, 0, 1, true)
+	return &newstatus
+}
+
 type PRReviewPage struct {
 	toprow      *tview.Flex
 	bottomrow   *tview.Flex
+	statusrow   *tview.Flex
 	discussions *tview.TreeView
 	commits     *tview.TreeView
 	tdisplay    *tview.TextView
@@ -25,6 +45,7 @@ type PRReviewPage struct {
 	displaylist bool
 	selcomment  *forge.CommentData
 	topflex     *tview.Flex
+	statusarea  *StatusItems
 	pr          *forge.PR
 	app         *tview.Application
 	name        string
@@ -42,10 +63,15 @@ func NewPRReviewPage(a *tview.Application) WindowPage {
 	PRPage := PRReviewPage{}
 
 	PRPage.topflex = tview.NewFlex().SetDirection(tview.FlexRow)
+	statusrow := tview.NewFlex()
+	statusrow.Box.SetBorder(true)
+	statusrow.Box.SetTitle("Status")
+	PRPage.topflex.AddItem(statusrow, 0, 1, true)
+	PRPage.statusrow = statusrow
 	toprow := tview.NewFlex().SetDirection(tview.FlexColumn)
-	PRPage.topflex.AddItem(toprow, 0, 1, true)
+	PRPage.topflex.AddItem(toprow, 0, 3, true)
 	bottomrow := tview.NewFlex()
-	PRPage.topflex.AddItem(bottomrow, 0, 3, true)
+	PRPage.topflex.AddItem(bottomrow, 0, 5, true)
 	PRPage.discussions = tview.NewTreeView()
 	PRPage.discussions.Box.SetTitle("Discussions")
 	PRPage.discussions.Box.SetBorder(true)
@@ -64,6 +90,8 @@ func NewPRReviewPage(a *tview.Application) WindowPage {
 	PRPage.bottomrow = bottomrow
 	PRPage.app = a
 	PRPage.selcomment = nil
+	PRPage.statusarea = NewStatusArea()
+	PRPage.statusrow.AddItem(PRPage.statusarea.rows, 0, 1, true)
 	focusList = []tview.Primitive{PRPage.discussions, PRPage.commits, bottomrow}
 
 	return &PRPage
@@ -467,6 +495,16 @@ func (m *PRReviewPage) PagePreDisplay() {
 	m.app.SetFocus(focusList[focusidx])
 	m.populateDiscussions()
 	m.populateCommits()
+	var status string = "Approval Status: "
+	switch m.pr.Approved {
+	case forge.UNKNOWN:
+		status = status + "UNKNOWN"
+	case forge.UNAPPROVED:
+		status = status + "NOT APPROVED"
+	case forge.APPROVED:
+		status = status + "APPROVED"
+	}
+	m.statusarea.approved.SetText(status)
 	return
 }
 
